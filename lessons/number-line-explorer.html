@@ -1,0 +1,752 @@
+<title>Number Line Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared with Place Value Explorer) ---------- */
+  :root {
+    --bg: #F3F6F4;
+    --surface: #FFFFFF;
+    --surface-alt: #E8EFEA;
+    --ink: #1B2A2E;
+    --ink-soft: #526764;
+    --ink-faint: #83938F;
+    --teal: #146B6B;
+    --teal-deep: #0D4A4A;
+    --teal-soft: #DCEEEC;
+    --amber: #C9740B;
+    --amber-soft: #FBE9CE;
+    --success: #1E8E5A;
+    --success-bg: #E3F5EC;
+    --error: #C0392B;
+    --error-bg: #FBEAE7;
+    --border: #D7E1DC;
+    --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D;
+      --surface: #16302E;
+      --surface-alt: #1C3A37;
+      --ink: #EAF4F1;
+      --ink-soft: #A9C4BF;
+      --ink-faint: #74928C;
+      --teal: #58D6D1;
+      --teal-deep: #8CE6E1;
+      --teal-soft: #1B3F3C;
+      --amber: #F0A94A;
+      --amber-soft: #3A2C13;
+      --success: #52DE9B;
+      --success-bg: #103628;
+      --error: #F1897C;
+      --error-bg: #3A1B16;
+      --border: #294744;
+      --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D;
+    --surface: #16302E;
+    --surface-alt: #1C3A37;
+    --ink: #EAF4F1;
+    --ink-soft: #A9C4BF;
+    --ink-faint: #74928C;
+    --teal: #58D6D1;
+    --teal-deep: #8CE6E1;
+    --teal-soft: #1B3F3C;
+    --amber: #F0A94A;
+    --amber-soft: #3A2C13;
+    --success: #52DE9B;
+    --success-bg: #103628;
+    --error: #F1897C;
+    --error-bg: #3A1B16;
+    --border: #294744;
+    --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Karla', 'Segoe UI', sans-serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft);
+    border: 1px solid var(--border);
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a {
+    display: flex; flex-direction: column; gap: .15rem;
+    padding: .6rem .75rem; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    text-decoration: none; color: var(--ink-soft);
+  }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip {
+    font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+  .chip.variant-b[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); }
+  .chip:disabled { opacity: .4; cursor: not-allowed; }
+
+  .chip-label { font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .35rem; }
+
+  .btn {
+    font: inherit; font-size: .9rem; font-weight: 500; padding: .55rem 1rem; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
+  }
+  .btn:hover { filter: brightness(0.97); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:hover { filter: brightness(1.15); } }
+  :root[data-theme="dark"] .btn:hover { filter: brightness(1.15); }
+
+  .shift-caption { font-size: .95rem; color: var(--ink-soft); }
+  .shift-caption strong { color: var(--ink); }
+
+  /* Vocab */
+  .vocab dt { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.02rem; }
+  .vocab dd { margin: .15rem 0 .9rem; color: var(--ink-soft); }
+  .vocab dd:last-child { margin-bottom: 0; }
+  .vocab strong { color: var(--ink); }
+
+  /* Symbol guide */
+  .symbol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+  @media (max-width: 620px) { .symbol-grid { grid-template-columns: repeat(2, 1fr); } }
+  .symbol-card { border: 1px solid var(--border); border-radius: 10px; padding: .8rem; background: var(--surface-alt); text-align: center; }
+  .symbol-card .sym { font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--teal); }
+  .symbol-card .meaning { font-size: .78rem; margin: .3rem 0 .25rem; }
+  .symbol-card .example { font-size: .72rem; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; }
+
+  /* Number line */
+  .numline-wrap svg { width: 100%; height: auto; display: block; }
+  .numline-point.point-a { fill: var(--teal); stroke: var(--surface); stroke-width: 2; }
+  .numline-point.point-b { fill: var(--amber); stroke: var(--surface); stroke-width: 2; }
+  .numline-point-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; fill: var(--ink); }
+  .numline-ticklabel { font-size: 10px; fill: var(--ink-faint); }
+  .numline-symbol { font-size: 20px; font-weight: 700; fill: var(--ink); }
+  .numline-zero-label { font-size: 10px; fill: var(--ink-faint); }
+
+  /* Slider */
+  input[type="range"].numline-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    margin: .2rem 0 0;
+  }
+  input[type="range"].numline-slider:focus { outline: none; }
+  input[type="range"].numline-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; margin-top: -7px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type="range"].numline-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
+  input[type="range"].numline-slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--teal); border: 2px solid var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type="range"].numline-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
+  .slider-endlabels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; margin-top: .3rem; }
+
+  /* Fraction glyph */
+  .frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'IBM Plex Mono', monospace; vertical-align: middle; font-weight: 600; }
+  .frac .num { border-bottom: 1.5px solid currentColor; padding: 0 .2em .06em; }
+  .frac .den { padding: .06em .2em 0; }
+
+  /* Options / cards (question + compare-item share this) */
+  .sorter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+  @media (max-width: 560px) { .sorter-grid { grid-template-columns: 1fr; } }
+  .question, .compare-item { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt, .compare-item .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink);
+    cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  /* Margin asides */
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card { flex-basis: auto; width: 100%; } }
+
+  /* Recap */
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Number · A.2 · Year 8</span>
+    <h1>Number Line Explorer</h1>
+    <p class="lede">Which is bigger — and how do you know for sure? Explore negative numbers, decimals and fractions on a real number line, then compare them yourself. No clock is running — take as long as you like.</p>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#compare"><span class="num">02</span><span class="label">Decimals &amp; fractions</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: which way is bigger?</h2></div>
+
+    <div class="split">
+      <div class="split-main">
+        <h3 style="margin:0;">What does a number line tell us?</h3>
+        <dl class="vocab">
+          <dt>Moving right</dt>
+          <dd>Numbers get bigger as you move right along a number line — 5 is to the right of 2, so 5 is bigger.</dd>
+          <dt>Moving left</dt>
+          <dd>Numbers get smaller as you move left — and they can keep going past zero into negative numbers. −5 is to the left of −2, so −5 is the smaller (colder, lower, more overdrawn) number.</dd>
+          <dt>Comparing symbols</dt>
+          <dd>We write comparisons using <span class="mono">=, ≠, &lt;, &gt;, ≤, ≥</span> — the pointy end of &lt; and &gt; always points at the smaller number, like a hungry arrow aiming at the smaller snack.</dd>
+        </dl>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🌡️ Below zero</p>
+        <p>A thermometer showing −5°C isn't "5 gone wrong" — it's five degrees colder than freezing. Same idea for a bank balance (−£20 means you owe £20) or a lift (floor −1 is one level below ground). Negative numbers describe real things.</p>
+      </aside>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Try it: slide along the line</h3>
+      <p class="intro" style="margin:0 0 1rem;">Drag the slider (or use the arrow keys) and watch what happens on each side of zero.</p>
+      <div class="numline-wrap" id="slider-numline"></div>
+      <input type="range" class="numline-slider" id="value-slider" min="-10" max="10" step="1" value="0" aria-label="Move along the number line from negative 10 to 10">
+      <div class="slider-endlabels"><span>← smaller</span><span>bigger →</span></div>
+      <p class="shift-caption" id="slider-caption" style="margin-top:.9rem;"></p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .6rem;">The six comparison symbols</h3>
+      <div class="symbol-grid">
+        <div class="symbol-card"><div class="sym">=</div><div class="meaning">equals</div><div class="example">4.4 m = 4.4 m</div></div>
+        <div class="symbol-card"><div class="sym">≠</div><div class="meaning">not equal to</div><div class="example">3 ≠ 5</div></div>
+        <div class="symbol-card"><div class="sym">&lt;</div><div class="meaning">less than</div><div class="example">−7 &lt; −2</div></div>
+        <div class="symbol-card"><div class="sym">&gt;</div><div class="meaning">greater than</div><div class="example">6 &gt; 3</div></div>
+        <div class="symbol-card"><div class="sym">≤</div><div class="meaning">less than or equal</div><div class="example">speed ≤ 30 mph</div></div>
+        <div class="symbol-card"><div class="sym">≥</div><div class="meaning">greater than or equal</div><div class="example">age ≥ 12</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Compare two cities</h3>
+      <p class="intro" style="margin:0 0 1rem;">Pick two cities and see how their typical winter temperatures compare on the number line.</p>
+
+      <p class="chip-label">First city</p>
+      <div class="chip-row" id="numline-chips-a" role="group" aria-label="Choose the first city"></div>
+
+      <p class="chip-label" style="margin-top:.9rem;">Second city</p>
+      <div class="chip-row variant-b" id="numline-chips-b" role="group" aria-label="Choose the second city"></div>
+
+      <div class="numline-wrap" id="numline-wrap" style="margin-top:1.3rem;"></div>
+      <p class="shift-caption" id="numline-caption" style="margin-top:.5rem;"></p>
+    </div>
+  </section>
+
+  <!-- ================= COMPARE ================= -->
+  <section id="compare">
+    <div class="section-head"><span class="index">02</span><h2>Does more digits mean bigger?</h2></div>
+
+    <div class="split">
+      <div class="split-main">
+        <p class="intro">Which is longer, 0.6 m or 0.58 m? It's tempting to compare digit-by-digit without lining things up — the trick is to line up the decimal points, padding with zeros if needed.</p>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">0️⃣ Padding with zeros</p>
+        <p>0.9 and 0.90 are exactly the same number — adding a zero on the end of a decimal never changes its value. So you can always pad the shorter number with zeros until both have the same number of places, then compare normally: 0.90 vs 0.85 — easy, 0.90 wins.</p>
+      </aside>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Which is bigger?</h3>
+      <div class="sorter-grid" id="decimal-grid"></div>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <p class="intro">Which is more pizza, 3/4 or 5/8? Fractions with different denominators can't be compared directly — convert to a common denominator, or use a quick benchmark like 1/2.</p>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">⚖️ Benchmark fractions</p>
+        <p>Fast sanity check: is it bigger or smaller than 1/2? 3/4 is clearly more than half a pizza; 5/8 is only a little more than half. That alone tells you 3/4 wins — no common denominator needed.</p>
+      </aside>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Which is bigger?</h3>
+      <div class="sorter-grid" id="fraction-grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>A number line puts smaller numbers to the <strong>left</strong> and bigger numbers to the <strong>right</strong> — including negative numbers, which sit left of zero.</span></li>
+        <li><span class="tick">✓</span><span>More digits after the decimal point doesn't mean a bigger number — line up the place values (padding with zeros helps) to compare properly.</span></li>
+        <li><span class="tick">✓</span><span>To compare fractions with different denominators, convert to a common denominator, or compare each to a benchmark like 1/2.</span></li>
+        <li><span class="tick">✓</span><span><strong>=, ≠, &lt;, &gt;, ≤, ≥</strong> are shorthand for "the same as", "different from", "smaller than", "bigger than" — and their "...or equal to" versions.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref A.2 (sub-skills A.2.1–A.2.4) · Number Line Explorer · a Number strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Reusable: two-option "which is bigger / which pile" card
+     (shared shape used by decimal check, fraction check —
+     the four-option practice question below is a sibling of
+     this, not a copy: same feedback/explain pattern, more options)
+     ========================================================= */
+
+  function renderTwoOptionCard(promptText, optA, optB, onPick, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card compare-item";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = promptText;
+    wrap.appendChild(prompt);
+
+    const options = document.createElement("div");
+    options.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+
+    [optA, optB].forEach(opt => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.innerHTML = opt.html;
+      btn.addEventListener("click", () => {
+        const correct = !!opt.isCorrect;
+        options.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (correct) {
+          btn.classList.add("correct");
+          feedback.textContent = "Yes — well reasoned.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          explain.textContent = opt.explain;
+          options.querySelectorAll(".option").forEach(o => o.disabled = true);
+          onPick && onPick(true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — try the other one.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      options.appendChild(btn);
+    });
+
+    wrap.appendChild(options);
+    wrap.appendChild(feedback);
+    wrap.appendChild(explain);
+    container.appendChild(wrap);
+  }
+
+  function fracHTML(num, den) {
+    return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+  }
+
+  /* =========================================================
+     Section 01 — "Slide along the line" marker tool
+     ========================================================= */
+
+  const SLIDER_MIN = -10, SLIDER_MAX = 10, SLIDER_X0 = 40, SLIDER_X1 = 600, SLIDER_Y = 45;
+
+  function sliderScaleX(v) {
+    return SLIDER_X0 + (v - SLIDER_MIN) / (SLIDER_MAX - SLIDER_MIN) * (SLIDER_X1 - SLIDER_X0);
+  }
+
+  function buildSliderSVG(value) {
+    const zeroX = sliderScaleX(0);
+    const markerX = sliderScaleX(value);
+    let ticks = "";
+    for (let v = SLIDER_MIN; v <= SLIDER_MAX; v++) {
+      const x = sliderScaleX(v);
+      const isMajor = v % 2 === 0;
+      ticks += `<line x1="${x}" y1="${SLIDER_Y - 6}" x2="${x}" y2="${SLIDER_Y + 6}" stroke="currentColor" stroke-width="1" opacity="${isMajor ? 0.6 : 0.3}" />`;
+      if (isMajor) {
+        ticks += `<text x="${x}" y="${SLIDER_Y + 24}" text-anchor="middle" class="mono numline-ticklabel">${v}</text>`;
+      }
+    }
+    return `<svg viewBox="0 0 640 90" role="img" aria-label="Number line marker currently at ${value}">
+        <line x1="${zeroX}" y1="8" x2="${zeroX}" y2="${SLIDER_Y + 30}" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.5" />
+        <line x1="${SLIDER_X0}" y1="${SLIDER_Y}" x2="${SLIDER_X1}" y2="${SLIDER_Y}" stroke="currentColor" stroke-width="1.5" />
+        ${ticks}
+        <circle cx="${markerX}" cy="${SLIDER_Y}" r="8" class="numline-point point-a" />
+        <text x="${markerX}" y="${SLIDER_Y - 14}" text-anchor="middle" class="mono numline-symbol" style="font-size:15px;">${value > 0 ? "+" + value : value}</text>
+      </svg>`;
+  }
+
+  function updateSlider(value) {
+    document.getElementById("slider-numline").innerHTML = buildSliderSVG(value);
+    const caption = document.getElementById("slider-caption");
+    if (value === 0) {
+      caption.innerHTML = "You're right at zero — neither positive nor negative.";
+    } else if (value > 0) {
+      caption.innerHTML = `You're at <strong>+${value}</strong> — ${value} more than zero. Keep sliding right and it keeps growing.`;
+    } else {
+      caption.innerHTML = `You're at <strong>${value}</strong> — ${Math.abs(value)} less than zero. Keep sliding left and it keeps shrinking.`;
+    }
+  }
+
+  const valueSlider = document.getElementById("value-slider");
+  valueSlider.addEventListener("input", () => updateSlider(Number(valueSlider.value)));
+  updateSlider(0);
+
+  /* =========================================================
+     Section 01 — Number line comparison tool
+     ========================================================= */
+
+  const CITIES = [
+    { id: "moscow", label: "Moscow", value: -10 },
+    { id: "aberdeen", label: "Aberdeen", value: -2 },
+    { id: "leeds", label: "Leeds", value: 3 },
+    { id: "london", label: "London", value: 6 },
+    { id: "dubai", label: "Dubai", value: 24 }
+  ];
+  const NUMLINE_MIN = -15, NUMLINE_MAX = 30, X0 = 40, X1 = 600, LINE_Y = 90;
+
+  let selA = CITIES[1]; // Aberdeen
+  let selB = CITIES[4]; // Dubai
+
+  function scaleX(value) {
+    return X0 + (value - NUMLINE_MIN) / (NUMLINE_MAX - NUMLINE_MIN) * (X1 - X0);
+  }
+
+  function buildNumberLineSVG(a, b) {
+    const zeroX = scaleX(0);
+    const ax = scaleX(a.value), bx = scaleX(b.value);
+    const symbol = a.value < b.value ? "&lt;" : a.value > b.value ? "&gt;" : "=";
+    const midX = (ax + bx) / 2;
+
+    let ticksSvg = "";
+    for (let v = NUMLINE_MIN; v <= NUMLINE_MAX; v += 5) {
+      const x = scaleX(v);
+      ticksSvg += `<line x1="${x}" y1="84" x2="${x}" y2="96" stroke="currentColor" stroke-width="1" opacity="0.6" />
+        <text x="${x}" y="112" text-anchor="middle" class="mono numline-ticklabel">${v}</text>`;
+    }
+
+    return `<svg viewBox="0 0 640 130" role="img" aria-label="Number line comparing ${a.label} at ${a.value} degrees and ${b.label} at ${b.value} degrees celsius">
+        <line x1="${zeroX}" y1="14" x2="${zeroX}" y2="112" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.5" />
+        <text x="${zeroX}" y="10" text-anchor="middle" class="mono numline-zero-label">0°C · freezing</text>
+
+        <line x1="${X0}" y1="${LINE_Y}" x2="${X1}" y2="${LINE_Y}" stroke="currentColor" stroke-width="1.5" />
+        ${ticksSvg}
+
+        <line x1="${ax}" y1="38" x2="${bx}" y2="38" stroke="var(--ink-soft)" stroke-width="1.5" />
+        <line x1="${ax}" y1="38" x2="${ax}" y2="82" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2" />
+        <line x1="${bx}" y1="38" x2="${bx}" y2="82" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2" />
+        <text x="${midX}" y="26" text-anchor="middle" class="mono numline-symbol">${symbol}</text>
+
+        <circle cx="${ax}" cy="${LINE_Y}" r="7" class="numline-point point-a" />
+        <text x="${ax}" y="50" text-anchor="middle" class="numline-point-label">${a.label} ${a.value}°C</text>
+
+        <circle cx="${bx}" cy="${LINE_Y}" r="7" class="numline-point point-b" />
+        <text x="${bx}" y="68" text-anchor="middle" class="numline-point-label">${b.label} ${b.value}°C</text>
+      </svg>`;
+  }
+
+  function renderCityChips(containerId, selected, onSelect) {
+    const row = document.getElementById(containerId);
+    row.innerHTML = "";
+    CITIES.forEach(city => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip" + (containerId.endsWith("-b") ? " variant-b" : "");
+      chip.textContent = city.label;
+      chip.setAttribute("aria-pressed", String(city.id === selected.id));
+      chip.addEventListener("click", () => onSelect(city));
+      row.appendChild(chip);
+    });
+  }
+
+  function refreshNumberLine() {
+    renderCityChips("numline-chips-a", selA, city => {
+      if (city.id === selB.id) { selB = selA; }
+      selA = city;
+      refreshNumberLine();
+    });
+    renderCityChips("numline-chips-b", selB, city => {
+      if (city.id === selA.id) { selA = selB; }
+      selB = city;
+      refreshNumberLine();
+    });
+
+    document.getElementById("numline-wrap").innerHTML = buildNumberLineSVG(selA, selB);
+
+    const symbol = selA.value < selB.value ? "<" : selA.value > selB.value ? ">" : "=";
+    let sentence;
+    if (symbol === "=") {
+      sentence = "They're exactly the same temperature.";
+    } else {
+      const colder = symbol === "<" ? selA : selB;
+      const warmer = symbol === "<" ? selB : selA;
+      sentence = `${colder.label} is colder than ${warmer.label}.`;
+    }
+    document.getElementById("numline-caption").innerHTML =
+      `<strong>${selA.label} (${selA.value}°C)</strong> ${symbol} <strong>${selB.label} (${selB.value}°C)</strong> — ${sentence}`;
+  }
+
+  refreshNumberLine();
+
+  /* =========================================================
+     Section 02 — Decimals & fractions quick checks
+     ========================================================= */
+
+  const DECIMAL_ITEMS = [
+    { prompt: "Which is longer?", aText: "0.6 m", bText: "0.58 m", aBigger: true, explain: "Line up the decimal places: 0.60 vs 0.58 — the tenths digit (6 vs 5) decides it." },
+    { prompt: "Which is heavier?", aText: "0.4 kg", bText: "0.45 kg", aBigger: false, explain: "0.40 vs 0.45 — 45 hundredths beats 40 hundredths, even though 0.4 has fewer digits." },
+    { prompt: "Which is further?", aText: "3.2 km", bText: "3.19 km", aBigger: true, explain: "3.20 vs 3.19 — the tenths digit (2 vs 1) decides it, even though 3.19 has more digits after the point." },
+    { prompt: "Which is more liquid?", aText: "0.07 l", bText: "0.1 l", aBigger: false, explain: "0.10 vs 0.07 — the tenths digit (1 vs 0) decides it. More decimal places doesn't mean a bigger number." }
+  ];
+
+  const decimalGrid = document.getElementById("decimal-grid");
+  DECIMAL_ITEMS.forEach(item => {
+    renderTwoOptionCard(
+      item.prompt,
+      { html: item.aText, isCorrect: item.aBigger, explain: item.explain },
+      { html: item.bText, isCorrect: !item.aBigger, explain: item.explain },
+      null,
+      decimalGrid
+    );
+  });
+
+  const FRACTION_ITEMS = [
+    { a: [3, 4], b: [5, 8], aBigger: true, explain: "3/4 = 6/8, which is more than 5/8." },
+    { a: [2, 5], b: [1, 3], aBigger: true, explain: "2/5 = 0.4 and 1/3 ≈ 0.33, so 2/5 is bigger." },
+    { a: [5, 6], b: [7, 8], aBigger: false, explain: "5/6 ≈ 0.83 and 7/8 = 0.875, so 7/8 is bigger." },
+    { a: [3, 10], b: [1, 4], aBigger: true, explain: "3/10 = 0.3 and 1/4 = 0.25, so 3/10 is bigger." }
+  ];
+
+  const fractionGrid = document.getElementById("fraction-grid");
+  FRACTION_ITEMS.forEach(item => {
+    renderTwoOptionCard(
+      "Which is bigger?",
+      { html: fracHTML(item.a[0], item.a[1]), isCorrect: item.aBigger, explain: item.explain },
+      { html: fracHTML(item.b[0], item.b[1]), isCorrect: !item.aBigger, explain: item.explain },
+      null,
+      fractionGrid
+    );
+  });
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "It's −3°C in Leeds and −7°C in Aberdeen. Which city is colder?",
+      options: ["Leeds", "Aberdeen", "They're the same temperature", "Can't tell"],
+      answerIndex: 1,
+      explain: "−7 is further to the left on the number line than −3, so Aberdeen is colder.",
+      hint: "Try this exact comparison in the number line tool in section 01 — pick Leeds and Aberdeen."
+    },
+    {
+      id: "q2",
+      prompt: "A snail crawls 0.6 m in an hour. A slug crawls 0.58 m in an hour. Which is faster?",
+      options: ["The snail (0.6 m)", "The slug (0.58 m)", "They're equally fast", "Can't tell"],
+      answerIndex: 0,
+      explain: "Line up the place values: 0.60 m vs 0.58 m — the tenths digit (6 vs 5) decides it.",
+      hint: "Pad 0.6 with a zero so both numbers have two decimal places, then compare."
+    },
+    {
+      id: "q3",
+      prompt: "You eat 3/4 of a pizza. Your friend eats 5/8 of an identical pizza. Who eats more?",
+      options: ["You (3/4)", "Your friend (5/8)", "Same amount", "Can't tell"],
+      answerIndex: 0,
+      explain: "3/4 = 6/8, which is more than 5/8.",
+      hint: "Try turning both fractions into eighths — what is 3/4 as eighths?"
+    },
+    {
+      id: "q4",
+      prompt: "A double-decker bus is 4.4 m tall. A road bridge has a height limit of 4.4 m. Which symbol correctly compares them?",
+      options: ["<", "=", ">", "≠"],
+      answerIndex: 1,
+      explain: "Both are exactly 4.4 m, so they're equal — which is exactly why the bus (only just) fits under the bridge.",
+      hint: "Are the two numbers actually different, or exactly the same?"
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

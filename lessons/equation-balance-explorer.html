@@ -1,0 +1,548 @@
+<title>Equation Balance Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared across all lessons — see LESSON_TEMPLATE.md) ---------- */
+  :root {
+    --bg: #F3F6F4; --surface: #FFFFFF; --surface-alt: #E8EFEA;
+    --ink: #1B2A2E; --ink-soft: #526764; --ink-faint: #83938F;
+    --teal: #146B6B; --teal-deep: #0D4A4A; --teal-soft: #DCEEEC;
+    --amber: #C9740B; --amber-soft: #FBE9CE;
+    --success: #1E8E5A; --success-bg: #E3F5EC;
+    --error: #C0392B; --error-bg: #FBEAE7;
+    --border: #D7E1DC; --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+      --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+      --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+      --amber: #F0A94A; --amber-soft: #3A2C13;
+      --success: #52DE9B; --success-bg: #103628;
+      --error: #F1897C; --error-bg: #3A1B16;
+      --border: #294744; --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+    --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+    --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+    --amber: #F0A94A; --amber-soft: #3A2C13;
+    --success: #52DE9B; --success-bg: #103628;
+    --error: #F1897C; --error-bg: #3A1B16;
+    --border: #294744; --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Karla', 'Segoe UI', sans-serif; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft); border: 1px solid var(--border); padding: .3rem .7rem; border-radius: 999px; width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .outcomes-block { display: flex; flex-direction: column; gap: .6rem; }
+  .outcomes-label { margin: 0; font-weight: 600; font-size: .95rem; }
+  .outcomes-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .outcomes-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .ref-tag {
+    flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .03em;
+    color: var(--teal-deep, var(--teal)); background: var(--teal-soft); border: 1px solid var(--border);
+    border-radius: 5px; padding: .1rem .4rem;
+  }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink-soft); }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  /* Concept cards (detailed sub-topic intros) */
+  .concept-card { display: flex; flex-direction: column; gap: .6rem; }
+  .concept-card .concept-title { display: flex; align-items: center; gap: .6rem; }
+  .concept-card .concept-title .ref-tag { font-size: .72rem; }
+  .concept-card h3 { font-size: 1.15rem; }
+  .concept-card p { margin: 0; color: var(--ink-soft); }
+  .concept-card p.example { color: var(--ink); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; font-size: .92rem; }
+
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card, .figure-card { flex-basis: auto; width: 100%; } }
+
+  /* Intro figures (definition / mechanics / real-world figure) */
+  .intro-block h3 { font-size: 1.1rem; margin-bottom: .1rem; }
+  .intro-block p { margin: 0; color: var(--ink-soft); }
+  .history-note { background: var(--surface-alt); border-radius: 10px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .5rem; }
+  .history-note h3 { font-size: 1.05rem; }
+  .history-note p { margin: 0; color: var(--ink-soft); }
+  .figure-card {
+    flex: 0 0 240px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  }
+  .figure-card svg { width: 100%; height: auto; display: block; }
+  .figure-caption { margin: 0; font-size: .82rem; line-height: 1.4; color: var(--ink-soft); text-align: center; min-height: 2.8em; display: flex; align-items: center; justify-content: center; }
+
+  /* Chips (equation picker) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: center; }
+  .chip { font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace; }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+
+  /* Balance scale */
+  .balance-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .balance-wrap svg { width: 100%; max-width: 360px; height: auto; display: block; }
+  .balance-pan-text { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; fill: var(--ink); }
+  .step-log { display: flex; flex-direction: column; gap: .5rem; width: 100%; max-width: 420px; }
+  .step-log .step-item { font-size: .85rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .55rem .8rem; }
+  .step-log .step-item strong { color: var(--ink); }
+  .balance-btn-row { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+  .btn {
+    font: inherit; font-size: .9rem; font-weight: 500; padding: .6rem 1.1rem; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
+  }
+  .btn.primary { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+  .btn:hover { filter: brightness(0.97); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:hover { filter: brightness(1.15); } }
+  :root[data-theme="dark"] .btn:hover { filter: brightness(1.15); }
+  .solved-banner { font-size: 1.1rem; font-weight: 700; color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  /* Options / questions */
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Algebra · B.7 · Year 8</span>
+    <h1>Equation Balance Explorer</h1>
+    <p class="lede">An equation is really just a balance that has to stay level — do the same thing to both sides, and it never tips. That one rule is all you need to find any missing number. No timer here — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">B.7.1</span> Solve a one-step equation (like x + 6 = 14, or 4x = 20) by doing one inverse operation to both sides</li>
+        <li><span class="ref-tag">B.7.2</span> Solve a two-step equation (like 2x + 3 = 11) by undoing operations one at a time, in the right order</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#playground"><span class="num">02</span><span class="label">Balance playground</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: keeping the balance</h2></div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>What actually is an equation?</h3>
+        <p>An equation is a statement that two amounts are exactly equal — like a set of scales that must stay level. Whatever's written on the left has to weigh the same as whatever's written on the right. When one side has a missing piece, written as <span class="mono">x</span>, "solving" the equation just means figuring out the one number that makes both sides balance.</p>
+      </div>
+      <div class="figure-card">
+        <div id="definition-diagram"></div>
+        <p class="figure-caption">The scales sit level — so both sides must be equal.</p>
+      </div>
+    </div>
+
+    <div class="intro-block">
+      <h3>How do we solve it?</h3>
+      <p>The rule that makes solving possible: whatever you do to one side, you must do to the other, or the scales tip and the statement stops being true. Add, subtract, multiply or divide both sides by the same amount, and the balance holds — which means you can strip away everything around <span class="mono">x</span> until it's alone on one side, with its value revealed on the other.</p>
+    </div>
+
+    <div class="history-note">
+      <h3>Where the word "algebra" comes from (a bit of history)</h3>
+      <p>The word "algebra" comes from a 9th-century book called <em>Al-Jabr</em>, written by the Persian mathematician Al-Khwarizmi — the title roughly means "restoring broken parts," describing exactly the technique of moving a piece from one side of an equation to the other to keep it balanced. The equals sign itself is newer: it was invented in 1557 by the Welsh mathematician Robert Recorde, who chose two parallel lines because, in his words, "no two things can be more equal." Before that, mathematicians had to write out "is equal to" in words every single time.</p>
+    </div>
+
+    <div class="intro-block">
+      <h3>Why equations matter beyond the classroom</h3>
+      <p>Equations aren't just a maths-class exercise — they're how a recipe gets scaled up or down for a different number of guests, how a phone bill works out an unknown data allowance from a fixed monthly charge, how engineers calculate a missing measurement for a bridge or a shelf, and how a satnav works out a missing travel time from distance and speed. Anywhere one known relationship has to hold exactly, there's an equation underneath it.</p>
+    </div>
+
+    <p class="intro">Every one of today's equations comes down to one of two patterns. Here's what each one means, and where you'd actually see it.</p>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">B.7.1</span><h3>One-step equations</h3></div>
+          <p>If one operation is standing between <span class="mono">x</span> and being alone on one side, undo it by doing the <strong>inverse operation to both sides</strong>. Undo "+" with "−", undo "×" with "÷" — and whatever you do to one side of the balance, you must do to the other, or it stops being true.</p>
+          <p class="example">A see-saw balances perfectly. One side holds a 14 kg sack of dog food. The other side holds a bag of cat food of unknown weight, <span class="mono">x</span>, plus a 6 kg sack of rice: <span class="mono">x + 6 = 14</span>. Subtract 6 kg from both sides of the balance to find the cat food's weight: <span class="mono">x = 8</span> kg.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🔄 Inverse operations undo each other</p>
+        <p>Addition and subtraction are opposites — one undoes the other. So are multiplication and division. To isolate <span class="mono">x</span>, always apply the <em>opposite</em> of whatever is being done to it.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">B.7.2</span><h3>Two-step equations</h3></div>
+          <p>Some equations have two operations to undo, like <span class="mono">2x + 3 = 11</span> — here <span class="mono">x</span> was multiplied by 2, <em>then</em> had 3 added. To solve it, undo the operations in <strong>reverse order</strong>: deal with the "+3" first, then the "×2".</p>
+          <p class="example">A taxi charges a £3 flat fee plus £2 for every mile: <span class="mono">2x + 3 = 11</span> for an £11 fare. Subtract the £3 flat fee from both sides first (<span class="mono">2x = 8</span>), then divide both sides by the £2-per-mile rate (<span class="mono">x = 4</span>) — the journey was 4 miles.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🧦 Undo in reverse order</p>
+        <p>You put socks on, then shoes — so to undo it, you take shoes off first, then socks. An equation is built the same way: if <span class="mono">x</span> was multiplied then had something added, undo the "added" part first, then the "multiplied" part.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= PLAYGROUND ================= -->
+  <section id="playground">
+    <div class="section-head"><span class="index">02</span><h2>Balance playground</h2></div>
+    <p class="intro">Pick an equation, then choose the correct next step each time — the balance always shows exactly what's happening to both sides.</p>
+
+    <div class="card">
+      <div class="chip-row" id="equation-chips" role="group" aria-label="Choose an equation"></div>
+
+      <div class="balance-wrap" style="margin-top:1.3rem;">
+        <div id="balance-diagram"></div>
+        <div class="balance-btn-row" id="balance-buttons"></div>
+        <div class="step-log" id="step-log"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>An equation says two things are equal — solving it means finding the value of <strong>x</strong> that makes that true.</span></li>
+        <li><span class="tick">✓</span><span>Whatever you do to one side of the equation, you must do to the <strong>other side</strong> too, to keep it balanced.</span></li>
+        <li><span class="tick">✓</span><span>Undo operations with their <strong>inverse</strong>: "+" with "−", "×" with "÷".</span></li>
+        <li><span class="tick">✓</span><span>For a two-step equation, undo the operations in <strong>reverse order</strong> — the added/subtracted part first, then the multiplied/divided part.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref B.7 (sub-skills B.7.1–B.7.2) · Equation Balance Explorer · an Algebra strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Balance-scale diagram (static beam — always shown level,
+     since every state we render is a valid, balanced equation)
+     ========================================================= */
+
+  function buildBalanceSVG(leftText, rightText) {
+    const beamY = 70, panY = 128, leftX = 75, rightX = 225, centerX = 150;
+    return `<svg viewBox="0 0 300 210" role="img" aria-label="A balance scale showing ${leftText} equals ${rightText}">
+        <polygon points="${centerX - 14},${beamY + 24} ${centerX + 14},${beamY + 24} ${centerX},${beamY}" fill="var(--ink-faint)" opacity="0.5" />
+        <rect x="${centerX - 3}" y="${beamY + 24}" width="6" height="14" fill="var(--ink-faint)" opacity="0.5" />
+        <line x1="${leftX}" y1="${beamY}" x2="${rightX}" y2="${beamY}" stroke="currentColor" stroke-width="3" />
+        <line x1="${leftX}" y1="${beamY}" x2="${leftX}" y2="${panY}" stroke="currentColor" stroke-width="1.5" />
+        <line x1="${rightX}" y1="${beamY}" x2="${rightX}" y2="${panY}" stroke="currentColor" stroke-width="1.5" />
+        <path d="M ${leftX - 45} ${panY} L ${leftX + 45} ${panY} L ${leftX + 34} ${panY + 26} L ${leftX - 34} ${panY + 26} Z" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="2" />
+        <path d="M ${rightX - 45} ${panY} L ${rightX + 45} ${panY} L ${rightX + 34} ${panY + 26} L ${rightX - 34} ${panY + 26} Z" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="2" />
+        <text x="${leftX}" y="${panY + 17}" text-anchor="middle" class="balance-pan-text">${leftText}</text>
+        <text x="${rightX}" y="${panY + 17}" text-anchor="middle" class="balance-pan-text">${rightText}</text>
+      </svg>`;
+  }
+
+  /* =========================================================
+     Equation state: represents  a·x + b = c
+     (a is always a positive integer here; b can be negative)
+     ========================================================= */
+
+  const EQUATIONS = [
+    { label: "x + 6 = 14", a: 1, b: 6, c: 14 },
+    { label: "x − 4 = 9", a: 1, b: -4, c: 9 },
+    { label: "4x = 20", a: 4, b: 0, c: 20 },
+    { label: "2x + 3 = 11", a: 2, b: 3, c: 11 },
+    { label: "3x − 5 = 10", a: 3, b: -5, c: 10 }
+  ];
+
+  let current = { ...EQUATIONS[0] };
+  let stepsTaken = [];
+
+  function termText(a, b) {
+    const xTerm = a === 1 ? "x" : `${a}x`;
+    if (b === 0) return xTerm;
+    return b > 0 ? `${xTerm} + ${b}` : `${xTerm} − ${Math.abs(b)}`;
+  }
+
+  function renderBalance() {
+    const leftText = termText(current.a, current.b);
+    document.getElementById("balance-diagram").innerHTML = buildBalanceSVG(leftText, String(current.c));
+
+    const buttonsRow = document.getElementById("balance-buttons");
+    buttonsRow.innerHTML = "";
+
+    if (current.b !== 0) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn primary";
+      btn.textContent = current.b > 0 ? `Subtract ${current.b} from both sides` : `Add ${Math.abs(current.b)} to both sides`;
+      btn.addEventListener("click", () => {
+        const before = `${termText(current.a, current.b)} = ${current.c}`;
+        current.c = current.c - current.b;
+        current.b = 0;
+        stepsTaken.push(`${before}  →  ${termText(current.a, current.b)} = ${current.c}`);
+        renderBalance();
+        renderStepLog();
+      });
+      buttonsRow.appendChild(btn);
+    } else if (current.a !== 1) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn primary";
+      btn.textContent = `Divide both sides by ${current.a}`;
+      btn.addEventListener("click", () => {
+        const before = `${termText(current.a, current.b)} = ${current.c}`;
+        current.c = current.c / current.a;
+        current.a = 1;
+        stepsTaken.push(`${before}  →  x = ${current.c}`);
+        renderBalance();
+        renderStepLog();
+      });
+      buttonsRow.appendChild(btn);
+    } else {
+      const banner = document.createElement("p");
+      banner.className = "solved-banner";
+      banner.textContent = `Solved! x = ${current.c}`;
+      buttonsRow.appendChild(banner);
+    }
+  }
+
+  function renderStepLog() {
+    const log = document.getElementById("step-log");
+    log.innerHTML = "";
+    stepsTaken.forEach(s => {
+      const item = document.createElement("div");
+      item.className = "step-item";
+      item.innerHTML = s.replace(/→/, "→ <strong></strong>").replace("<strong></strong>", "");
+      item.textContent = s;
+      log.appendChild(item);
+    });
+  }
+
+  function selectEquation(eq) {
+    current = { a: eq.a, b: eq.b, c: eq.c };
+    stepsTaken = [];
+    renderBalance();
+    renderStepLog();
+  }
+
+  function renderEquationChips() {
+    const row = document.getElementById("equation-chips");
+    row.innerHTML = "";
+    let selectedLabel = EQUATIONS[0].label;
+    EQUATIONS.forEach(eq => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = eq.label;
+      chip.setAttribute("aria-pressed", String(eq.label === selectedLabel));
+      chip.addEventListener("click", () => {
+        selectedLabel = eq.label;
+        row.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+        chip.setAttribute("aria-pressed", "true");
+        selectEquation(eq);
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  renderEquationChips();
+  selectEquation(EQUATIONS[0]);
+
+  /* Static "what is an equation" figure in Explore — a level balance, x + 6 = 14 */
+  document.getElementById("definition-diagram").innerHTML = buildBalanceSVG("x + 6", "14");
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "Solve: x + 8 = 15. What is x?",
+      options: ["7", "23", "8", "15"],
+      answerIndex: 0,
+      explain: "Subtract 8 from both sides: x + 8 − 8 = 15 − 8, so x = 7.",
+      hint: "What's the inverse of \"+8\"?"
+    },
+    {
+      id: "q2",
+      prompt: "Solve: 5x = 30. What is x?",
+      options: ["6", "25", "35", "150"],
+      answerIndex: 0,
+      explain: "Divide both sides by 5: 5x ÷ 5 = 30 ÷ 5, so x = 6.",
+      hint: "What's the inverse of \"×5\"?"
+    },
+    {
+      id: "q3",
+      prompt: "Solve: 3x + 4 = 19. What is x?",
+      options: ["5", "23", "8", "6.33"],
+      answerIndex: 0,
+      explain: "First subtract 4 from both sides: 3x = 15. Then divide both sides by 3: x = 5.",
+      hint: "Two steps — deal with the \"+4\" first, then the \"×3\"."
+    },
+    {
+      id: "q4",
+      prompt: "You're solving 2x − 5 = 9. What should you do first?",
+      options: ["Add 5 to both sides", "Subtract 5 from both sides", "Divide both sides by 2", "Multiply both sides by 2"],
+      answerIndex: 0,
+      explain: "The equation was built as: take x, multiply by 2, subtract 5. Undo in reverse order — the inverse of \"−5\" is \"+5\", so add 5 to both sides first, giving 2x = 14, then divide by 2 to get x = 7.",
+      hint: "Remember the socks-and-shoes aside — undo the last operation first."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

@@ -1,0 +1,728 @@
+<title>Probability Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared across all lessons — see LESSON_TEMPLATE.md) ---------- */
+  :root {
+    --bg: #F3F6F4; --surface: #FFFFFF; --surface-alt: #E8EFEA;
+    --ink: #1B2A2E; --ink-soft: #526764; --ink-faint: #83938F;
+    --teal: #146B6B; --teal-deep: #0D4A4A; --teal-soft: #DCEEEC;
+    --amber: #C9740B; --amber-soft: #FBE9CE;
+    --success: #1E8E5A; --success-bg: #E3F5EC;
+    --error: #C0392B; --error-bg: #FBEAE7;
+    --border: #D7E1DC; --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+      --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+      --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+      --amber: #F0A94A; --amber-soft: #3A2C13;
+      --success: #52DE9B; --success-bg: #103628;
+      --error: #F1897C; --error-bg: #3A1B16;
+      --border: #294744; --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+    --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+    --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+    --amber: #F0A94A; --amber-soft: #3A2C13;
+    --success: #52DE9B; --success-bg: #103628;
+    --error: #F1897C; --error-bg: #3A1B16;
+    --border: #294744; --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Karla', 'Segoe UI', sans-serif; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft); border: 1px solid var(--border); padding: .3rem .7rem; border-radius: 999px; width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .outcomes-block { display: flex; flex-direction: column; gap: .6rem; }
+  .outcomes-label { margin: 0; font-weight: 600; font-size: .95rem; }
+  .outcomes-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .outcomes-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .ref-tag {
+    flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .03em;
+    color: var(--teal-deep, var(--teal)); background: var(--teal-soft); border: 1px solid var(--border);
+    border-radius: 5px; padding: .1rem .4rem;
+  }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink-soft); }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  /* Concept cards (detailed sub-topic intros) */
+  .concept-card { display: flex; flex-direction: column; gap: .6rem; }
+  .concept-card .concept-title { display: flex; align-items: center; gap: .6rem; }
+  .concept-card .concept-title .ref-tag { font-size: .72rem; }
+  .concept-card h3 { font-size: 1.15rem; }
+  .concept-card p { margin: 0; color: var(--ink-soft); }
+  .concept-card p.example { color: var(--ink); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; font-size: .92rem; }
+
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card, .figure-card { flex-basis: auto; width: 100%; } }
+
+  /* Figure cards (interactive/static diagrams) */
+  .figure-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: .7rem;
+  }
+  .figure-card svg { width: 100%; height: auto; display: block; }
+  .figure-card input[type="range"] { width: 100%; max-width: 360px; }
+  .figure-caption { margin: 0; font-size: .88rem; line-height: 1.4; color: var(--ink-soft); text-align: center; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
+
+  /* Chips (scenario / mode selectors) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: center; }
+  .chip { font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+
+  input[type="range"].scale-slider {
+    width: 100%; -webkit-appearance: none; appearance: none; background: transparent; margin: .2rem 0 0;
+  }
+  input[type="range"].scale-slider:focus { outline: none; }
+  input[type="range"].scale-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].scale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; margin-top: -7px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type="range"].scale-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
+  input[type="range"].scale-slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].scale-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; }
+
+  /* Probability playground */
+  .mode-layout { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+  .mode-diagram { flex: 0 0 220px; }
+  .mode-diagram svg { width: 100%; height: auto; display: block; }
+  .mode-controls { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: .8rem; }
+  .roll-buttons { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .btn {
+    font: inherit; font-size: .88rem; font-weight: 500; padding: .55rem 1rem; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
+  }
+  .btn.primary { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+  .btn:hover { filter: brightness(0.97); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:hover { filter: brightness(1.15); } }
+  :root[data-theme="dark"] .btn:hover { filter: brightness(1.15); }
+
+  .freq-bars { display: flex; flex-direction: column; gap: .5rem; }
+  .freq-row { display: grid; grid-template-columns: 3.2rem 1fr 3rem; align-items: center; gap: .6rem; font-size: .85rem; }
+  .freq-row .freq-label { font-family: 'IBM Plex Mono', monospace; color: var(--ink-soft); }
+  .freq-row .freq-track { background: var(--surface-alt); border-radius: 6px; height: 16px; overflow: hidden; }
+  .freq-row .freq-fill { display: block; height: 100%; border-radius: 6px 0 0 6px; transition: width .25s ease; }
+  .freq-row .freq-count { font-family: 'IBM Plex Mono', monospace; color: var(--ink-faint); text-align: right; }
+
+  .trial-note { font-size: .85rem; color: var(--ink-faint); }
+
+  /* Options / questions */
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Probability · E.1 · Year 8</span>
+    <h1>Probability Explorer</h1>
+    <p class="lede">Will it rain tomorrow? Will you roll a six? Probability is how we put a number on "how likely" — no crystal ball required. No timer here — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">E.1.1</span> Describe how likely something is using the 0–1 scale and words like impossible, unlikely, even chance, likely and certain</li>
+        <li><span class="ref-tag">E.1.2</span> Tell equally likely outcomes (like a fair die) apart from unequally likely ones (like an uneven spinner)</li>
+        <li><span class="ref-tag">E.1.3</span> Record the outcomes of a simple experiment — like rolling a die or spinning a spinner — in a frequency table</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#playground"><span class="num">02</span><span class="label">Probability playground</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: how likely is it?</h2></div>
+    <p class="intro">You already talk about probability every day without realising it — "no chance," "I'll probably," "definitely." Maths just turns that everyday sense of "how likely" into a number, so it can be compared and calculated exactly.</p>
+
+    <!-- Concept 1: E.1.1 -->
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">E.1.1</span><h3>Placing likelihood on a scale</h3></div>
+          <p>Every probability is a number from <strong>0</strong> (impossible — it will never happen) to <strong>1</strong> (certain — it will definitely happen). Everything else sits somewhere in between: <strong>0.5</strong> is an even chance, below 0.5 is unlikely, above 0.5 is likely.</p>
+          <p class="example">A weather forecast saying "70% chance of rain" is just this same scale wearing a percentage costume: 70% is 0.7, which sits a bit past "even chance," in "likely" territory.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">☔ Percentages are probabilities too</p>
+        <p>0.7, 70%, and 7/10 are three ways of writing the exact same probability. If a forecast says 20% chance of snow, that's 0.2 on this same 0-to-1 scale — solidly "unlikely," but not impossible.</p>
+      </aside>
+    </div>
+
+    <div class="card" id="scale-tool-card">
+      <h3 style="margin:0 0 .3rem;">Try it: where does this land on the scale?</h3>
+      <p class="intro" style="margin:0 0 1rem;">Pick a scenario and watch where it lands.</p>
+      <div class="chip-row" id="scale-chips" role="group" aria-label="Choose a scenario"></div>
+      <div class="figure-card" style="margin-top:1.1rem; border:none; box-shadow:none; padding:0;">
+        <div id="scale-diagram"></div>
+        <p class="figure-caption" id="scale-caption"></p>
+      </div>
+    </div>
+
+    <!-- Concept 2: E.1.2 -->
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">E.1.2</span><h3>Equally likely vs unequally likely</h3></div>
+          <p>Outcomes are <strong>equally likely</strong> when nothing makes one more probable than another — every face of a fair six-sided die has exactly the same 1-in-6 chance. Outcomes are <strong>unequally likely</strong> when something tips the balance — like a spinner where one section is much bigger than another.</p>
+          <p class="example">Picture a spinner that's mostly blue with a small red wedge. You could still land on red — it's not impossible — but you'd land on blue far more often, simply because it takes up more of the circle.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">⚖️ Fair doesn't always mean 50/50</p>
+        <p>A fair die has <em>six</em> equally likely outcomes, not two — "fair" means no outcome is favoured, not that there are only two options. Don't confuse "equally likely" with "even chance" (which specifically means probability 0.5).</p>
+      </aside>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Try it: resize the spinner</h3>
+      <p class="intro" style="margin:0 0 1rem;">Drag the slider to change how big the teal section is, and watch its probability change to match.</p>
+      <div class="figure-card" style="border:none; box-shadow:none; padding:0;">
+        <div id="spinner-diagram"></div>
+        <input type="range" class="scale-slider" id="spinner-slider" min="15" max="345" step="1" value="120" aria-label="Resize the teal section of the spinner">
+        <p class="figure-caption" id="spinner-caption"></p>
+      </div>
+    </div>
+
+    <!-- Concept 3: E.1.3 -->
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">E.1.3</span><h3>Recording outcomes of an experiment</h3></div>
+          <p>In probability, an <strong>experiment</strong> just means any action with an uncertain result — rolling a die, spinning a spinner, flipping a coin. Each time you do it, you get one <strong>outcome</strong>. Doing it many times and writing down what happens each time — in a <strong>frequency table</strong> — lets you see the pattern of results.</p>
+          <p class="example">Flip a fair coin 20 times and tally the heads and tails. You'll rarely get exactly 10 and 10 — maybe 12 heads and 8 tails — and that's completely normal, not a sign the coin is unfair.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🎲 The coin has no memory</p>
+        <p>If a fair coin lands heads four times in a row, the next flip is <em>still</em> a 50/50 chance of heads — the coin doesn't "owe" you a tails. Each flip is independent; try it yourself in the playground below.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= PLAYGROUND ================= -->
+  <section id="playground">
+    <div class="section-head"><span class="index">02</span><h2>Probability playground</h2></div>
+    <p class="intro">Roll a fair die, or spin an unfair spinner, as many times as you like — the tally below records exactly what happens, so you can see the pattern build up for yourself.</p>
+
+    <div class="card">
+      <div class="chip-row" id="playground-mode-chips" role="group" aria-label="Choose fair die or unfair spinner"></div>
+
+      <div class="mode-layout" style="margin-top:1.2rem;">
+        <div class="mode-diagram" id="playground-diagram"></div>
+        <div class="mode-controls">
+          <div class="roll-buttons">
+            <button type="button" class="btn primary" id="roll-1">Roll once</button>
+            <button type="button" class="btn" id="roll-10">Roll 10 times</button>
+            <button type="button" class="btn" id="roll-50">Roll 50 times</button>
+            <button type="button" class="btn" id="roll-reset">Reset tally</button>
+          </div>
+          <div class="freq-bars" id="freq-bars"></div>
+          <p class="trial-note" id="trial-note"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>Probability is a number from <strong>0</strong> (impossible) to <strong>1</strong> (certain) — with unlikely, even chance and likely describing the space in between.</span></li>
+        <li><span class="tick">✓</span><span>Outcomes are <strong>equally likely</strong> when nothing favours one over another (a fair die); otherwise they're <strong>unequally likely</strong> (an uneven spinner).</span></li>
+        <li><span class="tick">✓</span><span>Recording the results of an experiment in a frequency table lets you compare what actually happened to what you expected.</span></li>
+        <li><span class="tick">✓</span><span>Random events have no memory — past results never change the probability of what happens next.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref E.1 (sub-skills E.1.1–E.1.3) · Probability Explorer · a Probability strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Shared drawing primitives (circle-sector diagrams — same
+     approach as the angle-explorer lesson: polar coordinates
+     plus an SVG arc/wedge path builder)
+     ========================================================= */
+
+  function polarPoint(cx, cy, r, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+  }
+
+  function wedgePath(cx, cy, r, startDeg, endDeg) {
+    const s = polarPoint(cx, cy, r, startDeg);
+    const e = polarPoint(cx, cy, r, endDeg);
+    const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+    // sweep=0 traces the increasing-angle (counter-clockwise on screen) direction —
+    // see LESSON_TEMPLATE.md / angle-explorer.html for why this must be 0, not 1.
+    return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 0 ${e.x} ${e.y} Z`;
+  }
+
+  function sectorLabel(cx, cy, r, startDeg, endDeg, text, colorVar) {
+    const mid = (startDeg + endDeg) / 2;
+    const p = polarPoint(cx, cy, r, mid);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" class="mono" style="font-size:13px; font-weight:700; fill:${colorVar};">${text}</text>`;
+  }
+
+  function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+  function simplifyFraction(num, den) {
+    const g = gcd(num, den) || 1;
+    return { num: num / g, den: den / g };
+  }
+
+  /* =========================================================
+     Concept 1 (E.1.1) — the probability scale tool
+     ========================================================= */
+
+  const SCENARIOS = [
+    { id: "seven", text: "Rolling a 7 on a normal six-sided die", num: 0, den: 6 },
+    { id: "six", text: "Rolling a 6 on a normal six-sided die", num: 1, den: 6 },
+    { id: "heads", text: "Flipping a coin and getting heads", num: 1, den: 2 },
+    { id: "gt2", text: "Rolling a number greater than 2 on a die", num: 4, den: 6 },
+    { id: "onetosix", text: "Rolling a number from 1 to 6 on a die", num: 6, den: 6 }
+  ];
+
+  const SCALE_X0 = 30, SCALE_X1 = 370, SCALE_Y = 60;
+
+  function scaleX(p) { return SCALE_X0 + p * (SCALE_X1 - SCALE_X0); }
+
+  function likelihoodWord(p) {
+    if (p === 0) return "Impossible";
+    if (p === 1) return "Certain";
+    if (p === 0.5) return "Even chance";
+    return p < 0.5 ? "Unlikely" : "Likely";
+  }
+
+  function buildScaleSVG(p) {
+    const markerX = scaleX(p);
+    const wordStops = [
+      { p: 0, text: "Impossible" }, { p: 0.25, text: "Unlikely" }, { p: 0.5, text: "Even chance" },
+      { p: 0.75, text: "Likely" }, { p: 1, text: "Certain" }
+    ];
+    const ticks = wordStops.map(s => {
+      const x = scaleX(s.p);
+      return `<line x1="${x}" y1="${SCALE_Y - 6}" x2="${x}" y2="${SCALE_Y + 6}" stroke="currentColor" stroke-width="1" opacity="0.5" />
+        <text x="${x}" y="${SCALE_Y + 24}" text-anchor="middle" class="mono" style="font-size:10px; fill:var(--ink-faint);">${s.text}</text>`;
+    }).join("");
+    return `<svg viewBox="0 0 400 110" role="img" aria-label="Probability scale from 0 (impossible) to 1 (certain), marker at ${p}">
+        <line x1="${SCALE_X0}" y1="${SCALE_Y}" x2="${SCALE_X1}" y2="${SCALE_Y}" stroke="currentColor" stroke-width="1.5" />
+        ${ticks}
+        <circle cx="${markerX}" cy="${SCALE_Y}" r="8" fill="var(--teal)" stroke="var(--surface)" stroke-width="2" />
+      </svg>`;
+  }
+
+  function updateScale(scenario) {
+    const p = scenario.num / scenario.den;
+    document.getElementById("scale-diagram").innerHTML = buildScaleSVG(p);
+    const frac = simplifyFraction(scenario.num, scenario.den);
+    const fracText = frac.den === 1 ? String(frac.num) : `${frac.num}/${frac.den}`;
+    document.getElementById("scale-caption").innerHTML =
+      `${scenario.text} → <strong>P = ${fracText}</strong> (${p.toFixed(2)}) — that's <strong>${likelihoodWord(p)}</strong>.`;
+  }
+
+  function renderScaleChips() {
+    const row = document.getElementById("scale-chips");
+    row.innerHTML = "";
+    let selected = SCENARIOS[2]; // start on "even chance" (coin flip)
+    SCENARIOS.forEach(s => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = s.text;
+      chip.setAttribute("aria-pressed", String(s.id === selected.id));
+      chip.addEventListener("click", () => {
+        selected = s;
+        row.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+        chip.setAttribute("aria-pressed", "true");
+        updateScale(s);
+      });
+      row.appendChild(chip);
+    });
+    updateScale(selected);
+  }
+
+  renderScaleChips();
+
+  /* =========================================================
+     Concept 2 (E.1.2) — the resizable spinner tool
+     ========================================================= */
+
+  const SP_CX = 130, SP_CY = 110, SP_R = 78;
+  let spinnerAngle = 120; // degrees of the teal section, out of 360
+
+  function buildSpinnerSVG() {
+    const tealEnd = spinnerAngle;
+    return `<svg viewBox="0 0 260 220" role="img" aria-label="A spinner with a teal section of ${spinnerAngle} degrees and an amber section making up the rest">
+        <path d="${wedgePath(SP_CX, SP_CY, SP_R, 0, tealEnd)}" fill="var(--teal)" />
+        <path d="${wedgePath(SP_CX, SP_CY, SP_R, tealEnd, 360)}" fill="var(--amber)" />
+        <circle cx="${SP_CX}" cy="${SP_CY}" r="${SP_R}" fill="none" stroke="var(--border)" stroke-width="1.5" />
+        ${sectorLabel(SP_CX, SP_CY, SP_R * 0.6, 0, tealEnd, "Teal", "var(--on-accent)")}
+        ${sectorLabel(SP_CX, SP_CY, SP_R * 0.6, tealEnd, 360, "Amber", "var(--on-accent)")}
+      </svg>`;
+  }
+
+  function updateSpinnerDiagram() {
+    document.getElementById("spinner-diagram").innerHTML = buildSpinnerSVG();
+    const teal = simplifyFraction(spinnerAngle, 360);
+    const amberAngle = 360 - spinnerAngle;
+    const amber = simplifyFraction(amberAngle, 360);
+    const tealPct = Math.round(spinnerAngle / 360 * 100);
+    document.getElementById("spinner-caption").innerHTML =
+      `P(teal) = ${teal.num}/${teal.den} ≈ ${tealPct}% &nbsp;·&nbsp; P(amber) = ${amber.num}/${amber.den} ≈ ${100 - tealPct}%`;
+  }
+
+  function renderSpinnerTool() {
+    const slider = document.getElementById("spinner-slider");
+    slider.addEventListener("input", e => {
+      spinnerAngle = Number(e.target.value);
+      updateSpinnerDiagram();
+    });
+    updateSpinnerDiagram();
+  }
+
+  renderSpinnerTool();
+
+  /* =========================================================
+     Section 02 — Probability playground (fair die / unfair spinner)
+     ========================================================= */
+
+  const DIE_OUTCOMES = [1, 2, 3, 4, 5, 6].map(n => ({ label: String(n), weight: 1, color: "var(--teal)" }));
+  const SPINNER_OUTCOMES = [
+    { label: "Teal", weight: 250, color: "var(--teal)" },
+    { label: "Amber", weight: 110, color: "var(--amber)" }
+  ];
+
+  const playgroundState = {
+    die: { outcomes: DIE_OUTCOMES, counts: DIE_OUTCOMES.map(() => 0), total: 0 },
+    spinner: { outcomes: SPINNER_OUTCOMES, counts: SPINNER_OUTCOMES.map(() => 0), total: 0 }
+  };
+
+  const PLAYGROUND_MODES = [
+    { id: "die", label: "Fair die" },
+    { id: "spinner", label: "Unfair spinner" }
+  ];
+  let playgroundMode = PLAYGROUND_MODES[0];
+
+  function weightedRandomIndex(outcomes) {
+    const totalWeight = outcomes.reduce((sum, o) => sum + o.weight, 0);
+    let r = Math.random() * totalWeight;
+    for (let i = 0; i < outcomes.length; i++) {
+      r -= outcomes[i].weight;
+      if (r <= 0) return i;
+    }
+    return outcomes.length - 1;
+  }
+
+  function buildDieDiagram(lastRoll) {
+    return `<svg viewBox="0 0 160 160" role="img" aria-label="A six-sided die${lastRoll ? ', last roll ' + lastRoll : ''}">
+        <rect x="20" y="20" width="120" height="120" rx="18" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2" />
+        <text x="80" y="95" text-anchor="middle" class="mono" style="font-size:56px; font-weight:700; fill:var(--teal);">${lastRoll || "–"}</text>
+      </svg>`;
+  }
+
+  function buildSpinnerDiagramFixed(lastLabel) {
+    const teal = SPINNER_OUTCOMES[0].weight, amber = SPINNER_OUTCOMES[1].weight;
+    return `<svg viewBox="0 0 220 200" role="img" aria-label="An unfair spinner, mostly teal with a smaller amber section${lastLabel ? ', last spin ' + lastLabel : ''}">
+        <path d="${wedgePath(110, 100, 72, 0, teal)}" fill="var(--teal)" />
+        <path d="${wedgePath(110, 100, 72, teal, 360)}" fill="var(--amber)" />
+        <circle cx="110" cy="100" r="72" fill="none" stroke="var(--border)" stroke-width="1.5" />
+        ${lastLabel ? `<circle cx="110" cy="100" r="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="2" />` : ""}
+      </svg>`;
+  }
+
+  let lastResultLabel = null;
+
+  function renderFreqBars() {
+    const state = playgroundState[playgroundMode.id];
+    const container = document.getElementById("freq-bars");
+    container.innerHTML = "";
+    const maxCount = Math.max(1, ...state.counts);
+    state.outcomes.forEach((outcome, i) => {
+      const count = state.counts[i];
+      const pct = state.total ? Math.round(count / state.total * 100) : 0;
+      const row = document.createElement("div");
+      row.className = "freq-row";
+      row.innerHTML = `
+        <span class="freq-label">${outcome.label}</span>
+        <span class="freq-track"><span class="freq-fill" style="width:${count / maxCount * 100}%; background:${outcome.color};"></span></span>
+        <span class="freq-count">${count} (${pct}%)</span>
+      `;
+      container.appendChild(row);
+    });
+    const note = document.getElementById("trial-note");
+    if (state.total === 0) {
+      note.textContent = "No rolls yet — try \"Roll once\" or \"Roll 50 times\" to get started.";
+    } else if (playgroundMode.id === "die") {
+      note.textContent = `${state.total} roll${state.total === 1 ? "" : "s"} so far. Each number is equally likely (1/6 ≈ 17%) — with more rolls, the counts tend to even out.`;
+    } else {
+      note.textContent = `${state.total} spin${state.total === 1 ? "" : "s"} so far. Teal takes up more of the spinner, so it should come up more often — but amber can still win any single spin.`;
+    }
+  }
+
+  function renderPlaygroundDiagram() {
+    const container = document.getElementById("playground-diagram");
+    container.innerHTML = playgroundMode.id === "die" ? buildDieDiagram(lastResultLabel) : buildSpinnerDiagramFixed(lastResultLabel);
+  }
+
+  function rollTrials(n) {
+    const state = playgroundState[playgroundMode.id];
+    for (let i = 0; i < n; i++) {
+      const idx = weightedRandomIndex(state.outcomes);
+      state.counts[idx]++;
+      state.total++;
+      lastResultLabel = state.outcomes[idx].label;
+    }
+    renderPlaygroundDiagram();
+    renderFreqBars();
+  }
+
+  function resetTally() {
+    const state = playgroundState[playgroundMode.id];
+    state.counts = state.outcomes.map(() => 0);
+    state.total = 0;
+    lastResultLabel = null;
+    renderPlaygroundDiagram();
+    renderFreqBars();
+  }
+
+  function renderPlaygroundModeChips() {
+    const row = document.getElementById("playground-mode-chips");
+    row.innerHTML = "";
+    PLAYGROUND_MODES.forEach(mode => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = mode.label;
+      chip.setAttribute("aria-pressed", String(mode.id === playgroundMode.id));
+      chip.addEventListener("click", () => {
+        playgroundMode = mode;
+        lastResultLabel = null;
+        renderPlaygroundModeChips();
+        renderPlaygroundDiagram();
+        renderFreqBars();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  document.getElementById("roll-1").addEventListener("click", () => rollTrials(1));
+  document.getElementById("roll-10").addEventListener("click", () => rollTrials(10));
+  document.getElementById("roll-50").addEventListener("click", () => rollTrials(50));
+  document.getElementById("roll-reset").addEventListener("click", resetTally);
+
+  renderPlaygroundModeChips();
+  renderPlaygroundDiagram();
+  renderFreqBars();
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "A weather forecast gives a probability of 0.9 that it will rain today. Which word best describes this?",
+      options: ["Impossible", "Even chance", "Likely", "Certain"],
+      answerIndex: 2,
+      explain: "0.9 is close to 1 (certain) but not exactly 1, so \"likely\" is the best description — it's not guaranteed to rain.",
+      hint: "Where does 0.9 sit on the 0-to-1 scale — right at an end, or close to one?"
+    },
+    {
+      id: "q2",
+      prompt: "A spinner has 4 equal-sized sections: red, blue, green and yellow. What is the probability of landing on blue?",
+      options: ["1/4", "1/2", "1/3", "1"],
+      answerIndex: 0,
+      explain: "There are 4 equally likely outcomes, and blue is 1 of them, so the probability is 1/4.",
+      hint: "How many equal sections are there in total, and how many of them are blue?"
+    },
+    {
+      id: "q3",
+      prompt: "In 20 spins of a spinner, these results were recorded: Red 11 times, Blue 6 times, Yellow 3 times. Which colour came up most often?",
+      options: ["Red", "Blue", "Yellow", "They're equal"],
+      answerIndex: 0,
+      explain: "Red was recorded 11 times out of 20 — more than blue (6) or yellow (3) — so it came up most often in this experiment.",
+      hint: "Compare the three frequencies: 11, 6, and 3 — which is the biggest?"
+    },
+    {
+      id: "q4",
+      prompt: "A fair coin has landed on heads 4 times in a row. What is the probability the next flip is heads?",
+      options: ["1/2 — each flip is independent", "Very low — tails is \"due\"", "1 — it's on a streak", "0 — it must switch"],
+      answerIndex: 0,
+      explain: "The coin has no memory. Every flip is independent, so no matter what happened before, the next flip is still a 50/50 chance of heads.",
+      hint: "Think back to the \"coin has no memory\" aside in the Explore section."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

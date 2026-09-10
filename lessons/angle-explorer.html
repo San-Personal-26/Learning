@@ -1,0 +1,792 @@
+<title>Angle Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared across all lessons — see LESSON_TEMPLATE.md) ---------- */
+  :root {
+    --bg: #F3F6F4; --surface: #FFFFFF; --surface-alt: #E8EFEA;
+    --ink: #1B2A2E; --ink-soft: #526764; --ink-faint: #83938F;
+    --teal: #146B6B; --teal-deep: #0D4A4A; --teal-soft: #DCEEEC;
+    --amber: #C9740B; --amber-soft: #FBE9CE;
+    --success: #1E8E5A; --success-bg: #E3F5EC;
+    --error: #C0392B; --error-bg: #FBEAE7;
+    --border: #D7E1DC; --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+      --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+      --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+      --amber: #F0A94A; --amber-soft: #3A2C13;
+      --success: #52DE9B; --success-bg: #103628;
+      --error: #F1897C; --error-bg: #3A1B16;
+      --border: #294744; --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+    --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+    --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+    --amber: #F0A94A; --amber-soft: #3A2C13;
+    --success: #52DE9B; --success-bg: #103628;
+    --error: #F1897C; --error-bg: #3A1B16;
+    --border: #294744; --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Karla', 'Segoe UI', sans-serif; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft); border: 1px solid var(--border); padding: .3rem .7rem; border-radius: 999px; width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .outcomes-block { display: flex; flex-direction: column; gap: .6rem; }
+  .outcomes-label { margin: 0; font-weight: 600; font-size: .95rem; }
+  .outcomes-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .outcomes-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .ref-tag {
+    flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .03em;
+    color: var(--teal-deep, var(--teal)); background: var(--teal-soft); border: 1px solid var(--border);
+    border-radius: 5px; padding: .1rem .4rem;
+  }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink-soft); }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  /* Concept cards (detailed sub-topic intros) */
+  .concept-card { display: flex; flex-direction: column; gap: .6rem; }
+  .concept-card .concept-title { display: flex; align-items: center; gap: .6rem; }
+  .concept-card .concept-title .ref-tag { font-size: .72rem; }
+  .concept-card h3 { font-size: 1.15rem; }
+  .concept-card p { margin: 0; color: var(--ink-soft); }
+  .concept-card p.example { color: var(--ink); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; font-size: .92rem; }
+
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card, .figure-card { flex-basis: auto; width: 100%; } }
+
+  /* Intro figures (turn-meter, benchmark circle, compass rose) */
+  .intro-block h3 { font-size: 1.1rem; margin-bottom: .1rem; }
+  .intro-block p { margin: 0; color: var(--ink-soft); }
+  .history-note { background: var(--surface-alt); border-radius: 10px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .5rem; }
+  .history-note h3 { font-size: 1.05rem; }
+  .history-note p { margin: 0; color: var(--ink-soft); }
+  .figure-card {
+    flex: 0 0 240px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  }
+  .figure-card svg { width: 100%; height: auto; display: block; }
+  .figure-card input[type="range"] { width: 100%; }
+  .figure-caption { margin: 0; font-size: .82rem; line-height: 1.4; color: var(--ink-soft); text-align: center; min-height: 2.8em; display: flex; align-items: center; justify-content: center; }
+
+  /* Angle playground */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip { font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+
+  .angle-layout { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .angle-diagram { flex: 0 0 260px; }
+  .angle-diagram svg { width: 100%; height: auto; display: block; }
+  .angle-controls { flex: 1 1 220px; display: flex; flex-direction: column; gap: 1rem; min-width: 220px; }
+  .slider-field label { font-size: .82rem; color: var(--ink-soft); display: block; margin-bottom: .3rem; }
+
+  input[type="range"].numline-slider {
+    width: 100%; -webkit-appearance: none; appearance: none; background: transparent; margin: .2rem 0 0;
+  }
+  input[type="range"].numline-slider:focus { outline: none; }
+  input[type="range"].numline-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; margin-top: -7px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type="range"].numline-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
+  input[type="range"].numline-slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; }
+  input[type="range"].numline-slider.variant-b::-webkit-slider-thumb { background: var(--amber); }
+  input[type="range"].numline-slider.variant-b::-moz-range-thumb { background: var(--amber); }
+
+  .angle-readout { font-size: .95rem; color: var(--ink-soft); }
+  .angle-readout strong { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
+  .angle-note { font-size: .85rem; color: var(--ink-faint); }
+
+  .angle-tag-teal { color: var(--teal-deep, var(--teal)); }
+  .angle-tag-amber { color: var(--amber); }
+
+  /* Options / questions */
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Geometry and Measures · D.10 · Year 8</span>
+    <h1>Angle Explorer</h1>
+    <p class="lede">Angles hide everywhere — in door hinges, pizza slices, crossed scissors. Three simple rules let you find a missing angle without ever picking up a protractor. No timer here — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">D.10.1</span> Find a missing angle when several angles meet at a single point</li>
+        <li><span class="ref-tag">D.10.2</span> Find a missing angle when angles sit together on a straight line</li>
+        <li><span class="ref-tag">D.10.3</span> Find a missing vertically opposite angle where two straight lines cross</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#playground"><span class="num">02</span><span class="label">Angle playground</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: three rules about angles</h2></div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>What actually is an angle?</h3>
+        <p>An angle is a measurement of <strong>turn</strong>. Picture two straight lines meeting at a single point, called the <strong>vertex</strong>. An angle tells you how far one line has rotated away from the other around that point — like a door swinging open from its hinge, or the hands of a clock spreading apart from 12. The bigger the angle, the further one line has turned relative to the other.</p>
+      </div>
+      <div class="figure-card">
+        <div id="turn-meter-diagram"></div>
+        <input type="range" class="numline-slider" id="turn-meter-slider" min="0" max="360" step="1" value="60" aria-label="Drag to change the angle of turn">
+        <p class="figure-caption" id="turn-meter-caption"></p>
+      </div>
+    </div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>How do we measure it?</h3>
+        <p>Angles are measured in <strong>degrees</strong>, written with a small ° symbol (e.g. 90°). A degree is a tiny slice of a full turn: if you spin all the way around in a circle back to where you started, that's <strong>360°</strong>. So 90° is a quarter turn, 180° is a half turn (a straight line), and 360° is a complete turn back to the start. (Later in maths you'll meet another unit called <em>radians</em> — but degrees are what we'll use here.)</p>
+      </div>
+      <div class="figure-card">
+        <div id="benchmark-diagram"></div>
+        <p class="figure-caption">A quarter turn (shaded) is 90° — four of them make a full 360° turn.</p>
+      </div>
+    </div>
+
+    <div class="history-note">
+      <h3>Where does 360 come from? (a bit of history)</h3>
+      <p>The choice of 360 isn't random, and it isn't modern — it goes back roughly 4,000 years to ancient Babylon. Babylonian mathematicians and astronomers used a counting system based on 60 (rather than our base-10), and 360 fits neatly into that system — it divides evenly by 2, 3, 4, 5, 6, 8, 9, 10, 12, and many more numbers, which made it very practical for the calculations they were doing by hand. It's also close to the number of days in a year, which the Babylonians were tracking closely for their calendar and astronomy — they watched the Sun appear to trace a full circle through the sky over the course of a year, and split that circular journey into 360 steps. The idea was passed on through Greek astronomers and mathematicians (including Hipparchus, who used it for early trigonometry and star-mapping) and has stuck ever since — every protractor, compass, and GPS system today still uses the Babylonians' 360°.</p>
+    </div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>Why angles matter beyond the classroom</h3>
+        <p>Angles aren't just an abstract maths topic — they're how ships and planes navigate (a <strong>bearing</strong> is an angle measured clockwise from North), how astronomers pinpoint stars and planets in the sky, how architects and engineers make sure buildings and bridges stand up safely, and how something as simple as a skateboard ramp or a bike gear is designed. Once you can reason about angles, you can describe direction, shape, and turning precisely — which is exactly what the three rules on this page let you do.</p>
+      </div>
+      <div class="figure-card">
+        <div id="compass-diagram"></div>
+        <p class="figure-caption">A ship's bearing of N 40° E — an angle measured from North.</p>
+      </div>
+    </div>
+
+    <p class="intro">Every one of today's angle problems comes down to one of three rules. Here's what each one means, why it's true, and where you'd actually see it.</p>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">D.10.1</span><h3>Angles at a point</h3></div>
+          <p>When two or more angles meet at a single point and go all the way around it back to where they started, they always add up to <strong>360°</strong> — because a full turn, all the way around, is always 360°, no matter how you slice it up.</p>
+          <p class="example">Think of a round pizza cut into slices from the centre. However unevenly you cut it — three big slices, six thin ones, whatever — the angles of every slice always add up to 360°, because together they make one full circle.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🔢 Why 360?</p>
+        <p>Long ago, Babylonian astronomers divided a full turn into 360 parts — probably because 360 divides evenly by so many numbers (2, 3, 4, 5, 6, 8, 9, 10...). It stuck, and we still use it today.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">D.10.2</span><h3>Angles on a straight line</h3></div>
+          <p>A straight line is itself a kind of angle — a flat one, worth exactly <strong>180°</strong> (half a full turn). So if one or more angles sit along one side of a straight line, they always add up to 180° between them.</p>
+          <p class="example">Prop a laptop lid open against a desk: the angle between the lid and the desk, plus the angle between the lid and the vertical, always adds up to 180° — because the desk and an imaginary line straight up from it together form one straight line.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">📐 Right angle checkpoint</p>
+        <p>A straight line is 180°, so a right angle (90°) is exactly half of that — a handy benchmark. If an angle looks bigger than a right angle but smaller than a straight line, it's somewhere between 90° and 180°.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">D.10.3</span><h3>Vertically opposite angles</h3></div>
+          <p>When two straight lines cross, they make four angles. The two angles directly opposite each other (across the crossing point, not next to each other) are called <strong>vertically opposite</strong> — and they're always exactly equal.</p>
+          <p class="example">Open a pair of scissors, or picture an X-shaped road crossing: the angle at the top is always identical to the angle at the bottom, and the angle on the left is always identical to the angle on the right.</p>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">⚠️ Don't mix them up</p>
+        <p>Vertically opposite angles (across the X) are <em>equal</em>. The angles right next to them, along the same straight line, are <em>not</em> equal to them — they're supplementary, adding up to 180° instead.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= PLAYGROUND ================= -->
+  <section id="playground">
+    <div class="section-head"><span class="index">02</span><h2>Angle playground</h2></div>
+    <p class="intro">Pick a rule, then drag the slider and watch the other angle(s) update to match — live proof that the rule always holds.</p>
+
+    <div class="card">
+      <div class="chip-row" id="mode-chips" role="group" aria-label="Choose which angle rule to explore"></div>
+
+      <div class="angle-layout" style="margin-top:1.2rem;">
+        <div class="angle-diagram" id="angle-diagram"></div>
+        <div class="angle-controls" id="angle-controls"></div>
+      </div>
+
+      <p class="angle-readout" id="angle-readout" style="margin-top:1rem;"></p>
+      <p class="angle-note" id="angle-note"></p>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>Angles all the way around a point add up to <strong>360°</strong>.</span></li>
+        <li><span class="tick">✓</span><span>Angles on a straight line add up to <strong>180°</strong>.</span></li>
+        <li><span class="tick">✓</span><span>When two lines cross, angles directly opposite each other are always <strong>equal</strong> — but the ones next to them are supplementary (180°), not equal.</span></li>
+        <li><span class="tick">✓</span><span>These three rules let you find a missing angle without ever picking up a protractor.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref D.10 (sub-skills D.10.1–D.10.3) · Angle Explorer · a Geometry and Measures strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Shared angle-diagram primitives (reused by all three modes)
+     ========================================================= */
+
+  function polarPoint(cx, cy, r, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+  }
+
+  function arcPath(cx, cy, r, startDeg, endDeg) {
+    const start = polarPoint(cx, cy, r, startDeg);
+    const end = polarPoint(cx, cy, r, endDeg);
+    const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+    // Our angle convention increases counter-clockwise on screen (see polarPoint),
+    // but SVG's sweep-flag=1 draws clockwise on screen — so sweep must be 0 here
+    // to trace from startDeg to endDeg in the increasing (CCW) direction.
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}`;
+  }
+
+  function rayLine(cx, cy, len, angleDeg) {
+    const p = polarPoint(cx, cy, len, angleDeg);
+    return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="currentColor" stroke-width="2" />`;
+  }
+
+  function angleLabel(cx, cy, r, startDeg, endDeg, text, colorVar) {
+    const mid = (startDeg + endDeg) / 2;
+    const p = polarPoint(cx, cy, r, mid);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" class="mono" style="font-size:14px; font-weight:700; fill:${colorVar};">${text}°</text>`;
+  }
+
+  const CX = 130, CY = 150, RAY_LEN = 105, ARC_R = 42, LABEL_R = 62;
+
+  function wedgePath(cx, cy, r, startDeg, endDeg) {
+    const s = polarPoint(cx, cy, r, startDeg);
+    const e = polarPoint(cx, cy, r, endDeg);
+    const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+    return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 0 ${e.x} ${e.y} Z`;
+  }
+
+  /* =========================================================
+     Intro figure 1 — the turn-meter (interactive): one fixed
+     reference ray at 0°, one draggable ray from 0-360°, with
+     the swept angle shaded and labelled live.
+     ========================================================= */
+
+  const TCX = 110, TCY = 115, TRAY = 82, TARC = 36, TLABEL = 56;
+  let turnAngle = 60;
+
+  function buildTurnMeterSVG() {
+    const a = turnAngle;
+    const wedge = a > 0 && a < 360 ? `<path d="${wedgePath(TCX, TCY, TARC, 0, a)}" fill="var(--teal-soft)" />` : "";
+    return `<svg viewBox="0 0 220 200" role="img" aria-label="An angle of ${a} degrees between two rays">
+        ${wedge}
+        ${rayLine(TCX, TCY, TRAY, 0)}
+        ${a > 0 && a < 360 ? rayLine(TCX, TCY, TRAY, a) : ""}
+        <path d="${arcPath(TCX, TCY, TARC, 0, a === 0 ? 359.999 : a)}" fill="none" stroke="var(--teal)" stroke-width="2.5" />
+        ${a >= 20 ? angleLabel(TCX, TCY, TLABEL, 0, a, a, "var(--teal-deep, var(--teal))") : ""}
+        <circle cx="${TCX}" cy="${TCY}" r="3" fill="currentColor" />
+      </svg>`;
+  }
+
+  function turnMeterCaptionText(a) {
+    if (a === 0 || a === 360) return a + "° — no turn at all yet, or a full turn back to the start.";
+    if (a === 90) return "90° — a quarter turn.";
+    if (a === 180) return "180° — a half turn. The two rays now form a straight line.";
+    if (a === 270) return "270° — three-quarters of a turn.";
+    return a + "° of turn, out of a full 360° turn.";
+  }
+
+  function renderTurnMeter() {
+    document.getElementById("turn-meter-diagram").innerHTML = buildTurnMeterSVG();
+    document.getElementById("turn-meter-caption").textContent = turnMeterCaptionText(turnAngle);
+  }
+
+  /* =========================================================
+     Intro figure 2 — the benchmark circle (static): a full
+     circle with 0/90/180/270° marked, and the first quarter
+     turn shaded so 90° has something concrete to point at.
+     ========================================================= */
+
+  function buildBenchmarkSVG() {
+    const BCX = 110, BCY = 110, BR = 78;
+    const marks = [0, 90, 180, 270];
+    const rays = marks.map(d => rayLine(BCX, BCY, BR, d)).join("");
+    const labels = [
+      { d: 0, text: "0°/360°" }, { d: 90, text: "90°" }, { d: 180, text: "180°" }, { d: 270, text: "270°" }
+    ].map(m => {
+      const p = polarPoint(BCX, BCY, BR + 16, m.d);
+      return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" class="mono" style="font-size:11px; fill:var(--ink-soft);">${m.text}</text>`;
+    }).join("");
+    return `<svg viewBox="0 0 220 220" role="img" aria-label="A full circle marked at 0, 90, 180 and 270 degrees, with the first quarter turn shaded">
+        <circle cx="${BCX}" cy="${BCY}" r="${BR}" fill="none" stroke="var(--border)" stroke-width="2" />
+        <path d="${wedgePath(BCX, BCY, BR, 0, 90)}" fill="var(--teal-soft)" />
+        ${rays}
+        <circle cx="${BCX}" cy="${BCY}" r="3" fill="currentColor" />
+        ${labels}
+      </svg>`;
+  }
+
+  /* =========================================================
+     Intro figure 3 — the compass rose (static): a bearing of
+     N 40° E, shown as an angle measured clockwise from North.
+     Compass bearings run clockwise from North, the opposite
+     sense to our maths angle convention above — so a bearing
+     of b degrees sits at maths-angle (90 - b).
+     ========================================================= */
+
+  function buildCompassSVG() {
+    const QCX = 110, QCY = 110, QR = 78, BEARING = 40;
+    const northMath = 90, bearingMath = 90 - BEARING;
+    const compassPoints = [
+      { d: 90, text: "N" }, { d: 0, text: "E" }, { d: -90, text: "S" }, { d: 180, text: "W" }
+    ];
+    const rays = compassPoints.map(p => rayLine(QCX, QCY, QR, p.d)).join("");
+    const labels = compassPoints.map(p => {
+      const pos = polarPoint(QCX, QCY, QR + 14, p.d);
+      return `<text x="${pos.x}" y="${pos.y}" text-anchor="middle" dominant-baseline="middle" class="mono" style="font-size:12px; font-weight:700; fill:var(--ink-soft);">${p.text}</text>`;
+    }).join("");
+    return `<svg viewBox="0 0 220 220" role="img" aria-label="A compass rose showing a bearing of North 40 degrees East">
+        <circle cx="${QCX}" cy="${QCY}" r="${QR}" fill="none" stroke="var(--border)" stroke-width="2" />
+        <path d="${wedgePath(QCX, QCY, 34, bearingMath, northMath)}" fill="var(--amber-soft)" />
+        ${rays}
+        <line x1="${QCX}" y1="${QCY}" x2="${polarPoint(QCX, QCY, QR, bearingMath).x}" y2="${polarPoint(QCX, QCY, QR, bearingMath).y}" stroke="var(--amber)" stroke-width="2.5" />
+        <circle cx="${QCX}" cy="${QCY}" r="3" fill="currentColor" />
+        ${labels}
+        ${angleLabel(QCX, QCY, 50, bearingMath, northMath, BEARING, "var(--amber)")}
+      </svg>`;
+  }
+
+  /* =========================================================
+     Mode 1 — Angles at a point (D.10.1): two sliders A, B;
+     third angle C = 360 - A - B is computed live.
+     ========================================================= */
+
+  let pointA = 140, pointB = 90; // degrees
+
+  function clampPointSliders() {
+    pointA = Math.min(Math.max(pointA, 10), 340);
+    const maxB = 340 - pointA;
+    pointB = Math.min(Math.max(pointB, 10), maxB);
+  }
+
+  function buildPointSVG() {
+    clampPointSliders();
+    const c = 360 - pointA - pointB;
+    const r1start = 0, r1end = pointA;
+    const r2start = pointA, r2end = pointA + pointB;
+    const r3start = pointA + pointB, r3end = 360;
+
+    return `<svg viewBox="0 0 260 300" role="img" aria-label="Three angles meeting at a point: ${pointA} degrees, ${pointB} degrees, and ${c} degrees, adding to 360">
+        ${rayLine(CX, CY, RAY_LEN, 0)}
+        ${rayLine(CX, CY, RAY_LEN, pointA)}
+        ${rayLine(CX, CY, RAY_LEN, pointA + pointB)}
+        <path d="${arcPath(CX, CY, ARC_R, r1start, r1end)}" fill="none" stroke="var(--teal)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, r2start, r2end)}" fill="none" stroke="var(--amber)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, r3start, r3end)}" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" />
+        ${angleLabel(CX, CY, LABEL_R, r1start, r1end, pointA, "var(--teal-deep, var(--teal))")}
+        ${angleLabel(CX, CY, LABEL_R, r2start, r2end, pointB, "var(--amber)")}
+        ${angleLabel(CX, CY, LABEL_R, r3start, r3end, c, "var(--ink-faint)")}
+        <circle cx="${CX}" cy="${CY}" r="3" fill="currentColor" />
+      </svg>`;
+  }
+
+  // Updates the diagram + readout only — never touches the slider elements
+  // themselves, so a slider being actively dragged is never recreated
+  // mid-gesture (that's what made dragging feel resistive).
+  function updatePointDiagram() {
+    clampPointSliders();
+    document.getElementById("angle-diagram").innerHTML = buildPointSVG();
+    const sliderB = document.getElementById("point-slider-b");
+    if (sliderB) {
+      sliderB.max = 340 - pointA;
+      if (Number(sliderB.value) !== pointB) sliderB.value = pointB;
+    }
+    const c = 360 - pointA - pointB;
+    document.getElementById("angle-readout").innerHTML =
+      `<strong>${pointA}°</strong> + <strong>${pointB}°</strong> + <strong>${c}°</strong> = <strong>360°</strong>`;
+    document.getElementById("angle-note").textContent = "Drag either slider — the third angle always adjusts so all three still add up to 360°.";
+  }
+
+  function renderPointMode() {
+    document.getElementById("angle-controls").innerHTML = `
+      <div class="slider-field">
+        <label for="point-slider-a">Angle A <span class="angle-tag-teal">(teal)</span></label>
+        <input type="range" class="numline-slider" id="point-slider-a" min="10" max="340" step="1" value="${pointA}">
+      </div>
+      <div class="slider-field">
+        <label for="point-slider-b">Angle B <span class="angle-tag-amber">(amber)</span></label>
+        <input type="range" class="numline-slider variant-b" id="point-slider-b" min="10" max="${340 - pointA}" step="1" value="${pointB}">
+      </div>
+    `;
+    document.getElementById("point-slider-a").addEventListener("input", e => {
+      pointA = Number(e.target.value);
+      updatePointDiagram();
+    });
+    document.getElementById("point-slider-b").addEventListener("input", e => {
+      pointB = Number(e.target.value);
+      updatePointDiagram();
+    });
+    updatePointDiagram();
+  }
+
+  /* =========================================================
+     Mode 2 — Angles on a straight line (D.10.2): one slider A;
+     the other angle B = 180 - A is computed live.
+     ========================================================= */
+
+  let lineA = 55;
+
+  function buildLineSVG() {
+    const b = 180 - lineA;
+    return `<svg viewBox="0 0 260 220" role="img" aria-label="Two angles on a straight line: ${lineA} degrees and ${b} degrees, adding to 180">
+        ${rayLine(CX, CY, RAY_LEN, 0)}
+        ${rayLine(CX, CY, RAY_LEN, 180)}
+        ${rayLine(CX, CY, RAY_LEN, lineA)}
+        <path d="${arcPath(CX, CY, ARC_R, 0, lineA)}" fill="none" stroke="var(--teal)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, lineA, 180)}" fill="none" stroke="var(--amber)" stroke-width="2.5" />
+        ${angleLabel(CX, CY, LABEL_R, 0, lineA, lineA, "var(--teal-deep, var(--teal))")}
+        ${angleLabel(CX, CY, LABEL_R, lineA, 180, b, "var(--amber)")}
+        <circle cx="${CX}" cy="${CY}" r="3" fill="currentColor" />
+      </svg>`;
+  }
+
+  function updateLineDiagram() {
+    document.getElementById("angle-diagram").innerHTML = buildLineSVG();
+    const b = 180 - lineA;
+    document.getElementById("angle-readout").innerHTML = `<strong>${lineA}°</strong> + <strong>${b}°</strong> = <strong>180°</strong>`;
+    document.getElementById("angle-note").textContent = "Drag the slider — the amber angle always shrinks exactly as much as the teal one grows, so together they stay at 180°.";
+  }
+
+  function renderLineMode() {
+    document.getElementById("angle-controls").innerHTML = `
+      <div class="slider-field">
+        <label for="line-slider-a">Angle A <span class="angle-tag-teal">(teal)</span></label>
+        <input type="range" class="numline-slider" id="line-slider-a" min="5" max="175" step="1" value="${lineA}">
+      </div>
+    `;
+    document.getElementById("line-slider-a").addEventListener("input", e => {
+      lineA = Number(e.target.value);
+      updateLineDiagram();
+    });
+    updateLineDiagram();
+  }
+
+  /* =========================================================
+     Mode 3 — Vertically opposite angles (D.10.3): one slider A;
+     the opposite angle equals A, the two adjacent ones = 180 - A.
+     ========================================================= */
+
+  let vertA = 60;
+
+  function buildVerticalSVG() {
+    const adj = 180 - vertA;
+    return `<svg viewBox="0 0 260 260" role="img" aria-label="Two crossing lines making a ${vertA} degree angle and its vertically opposite ${vertA} degree angle, plus two adjacent ${adj} degree angles">
+        ${rayLine(CX, CY, RAY_LEN, 0)}
+        ${rayLine(CX, CY, RAY_LEN, 180)}
+        ${rayLine(CX, CY, RAY_LEN, vertA)}
+        ${rayLine(CX, CY, RAY_LEN, vertA + 180)}
+        <path d="${arcPath(CX, CY, ARC_R, 0, vertA)}" fill="none" stroke="var(--teal)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, vertA, 180)}" fill="none" stroke="var(--amber)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, 180, vertA + 180)}" fill="none" stroke="var(--teal)" stroke-width="2.5" />
+        <path d="${arcPath(CX, CY, ARC_R, vertA + 180, 360)}" fill="none" stroke="var(--amber)" stroke-width="2.5" />
+        ${angleLabel(CX, CY, LABEL_R, 0, vertA, vertA, "var(--teal-deep, var(--teal))")}
+        ${angleLabel(CX, CY, LABEL_R, vertA, 180, adj, "var(--amber)")}
+        ${angleLabel(CX, CY, LABEL_R, 180, vertA + 180, vertA, "var(--teal-deep, var(--teal))")}
+        ${angleLabel(CX, CY, LABEL_R, vertA + 180, 360, adj, "var(--amber)")}
+        <circle cx="${CX}" cy="${CY}" r="3" fill="currentColor" />
+      </svg>`;
+  }
+
+  function updateVerticalDiagram() {
+    document.getElementById("angle-diagram").innerHTML = buildVerticalSVG();
+    const adj = 180 - vertA;
+    document.getElementById("angle-readout").innerHTML =
+      `Both teal angles stay <strong>${vertA}°</strong> · both amber angles stay <strong>${adj}°</strong>`;
+    document.getElementById("angle-note").textContent = "Drag the slider — the two teal (vertically opposite) angles always match each other exactly, whatever value you pick.";
+  }
+
+  function renderVerticalMode() {
+    document.getElementById("angle-controls").innerHTML = `
+      <div class="slider-field">
+        <label for="vert-slider-a">Angle A <span class="angle-tag-teal">(teal)</span></label>
+        <input type="range" class="numline-slider" id="vert-slider-a" min="5" max="175" step="1" value="${vertA}">
+      </div>
+    `;
+    document.getElementById("vert-slider-a").addEventListener("input", e => {
+      vertA = Number(e.target.value);
+      updateVerticalDiagram();
+    });
+    updateVerticalDiagram();
+  }
+
+  /* =========================================================
+     Mode switcher
+     ========================================================= */
+
+  const MODES = [
+    { id: "point", label: "At a point", render: renderPointMode },
+    { id: "line", label: "On a straight line", render: renderLineMode },
+    { id: "vertical", label: "Vertically opposite", render: renderVerticalMode }
+  ];
+  let currentMode = MODES[0];
+
+  function renderModeChips() {
+    const row = document.getElementById("mode-chips");
+    row.innerHTML = "";
+    MODES.forEach(mode => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = mode.label;
+      chip.setAttribute("aria-pressed", String(mode.id === currentMode.id));
+      chip.addEventListener("click", () => {
+        currentMode = mode;
+        renderModeChips();
+        currentMode.render();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  renderModeChips();
+  currentMode.render();
+
+  /* Intro figures: render the static ones once, wire up the turn-meter slider */
+  renderTurnMeter();
+  document.getElementById("turn-meter-slider").addEventListener("input", e => {
+    turnAngle = Number(e.target.value);
+    renderTurnMeter();
+  });
+  document.getElementById("benchmark-diagram").innerHTML = buildBenchmarkSVG();
+  document.getElementById("compass-diagram").innerHTML = buildCompassSVG();
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "Three angles meet at a point: 120°, 95°, and a missing angle. What is the missing angle?",
+      options: ["135°", "145°", "120°", "155°"],
+      answerIndex: 1,
+      explain: "All angles at a point add up to 360°: 360 − 120 − 95 = 145°.",
+      hint: "Try the \"At a point\" mode in the playground and set the sliders to 120 and 95."
+    },
+    {
+      id: "q2",
+      prompt: "A ramp leans against a flat pavement, making a 35° angle on one side. What's the angle on the other side of the ramp, along the same straight pavement?",
+      options: ["55°", "145°", "125°", "165°"],
+      answerIndex: 1,
+      explain: "Angles on a straight line add up to 180°: 180 − 35 = 145°.",
+      hint: "Try the \"On a straight line\" mode and set the slider to 35."
+    },
+    {
+      id: "q3",
+      prompt: "Two straight roads cross. One of the angles formed is 72°. What is the angle vertically opposite it?",
+      options: ["18°", "72°", "108°", "144°"],
+      answerIndex: 1,
+      explain: "Vertically opposite angles are always equal, so the opposite angle is also 72°.",
+      hint: "Try the \"Vertically opposite\" mode — the two teal angles always match."
+    },
+    {
+      id: "q4",
+      prompt: "Two lines cross. One angle is 50°. What is the angle right next to it, along the same straight line (not the one opposite it)?",
+      options: ["50°", "130°", "180°", "25°"],
+      answerIndex: 1,
+      explain: "The angle next to it (adjacent, on the same line) is supplementary, not equal: 180 − 50 = 130°. Only the angle directly opposite would be 50°.",
+      hint: "This is the mix-up from the aside in Explore — adjacent isn't the same as vertically opposite."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

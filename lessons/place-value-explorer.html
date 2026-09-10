@@ -1,0 +1,890 @@
+<title>Place Value Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --bg: #F3F6F4;
+    --surface: #FFFFFF;
+    --surface-alt: #E8EFEA;
+    --ink: #1B2A2E;
+    --ink-soft: #526764;
+    --ink-faint: #83938F;
+    --teal: #146B6B;
+    --teal-deep: #0D4A4A;
+    --teal-soft: #DCEEEC;
+    --amber: #C9740B;
+    --amber-soft: #FBE9CE;
+    --success: #1E8E5A;
+    --success-bg: #E3F5EC;
+    --error: #C0392B;
+    --error-bg: #FBEAE7;
+    --border: #D7E1DC;
+    --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D;
+      --surface: #16302E;
+      --surface-alt: #1C3A37;
+      --ink: #EAF4F1;
+      --ink-soft: #A9C4BF;
+      --ink-faint: #74928C;
+      --teal: #58D6D1;
+      --teal-deep: #8CE6E1;
+      --teal-soft: #1B3F3C;
+      --amber: #F0A94A;
+      --amber-soft: #3A2C13;
+      --success: #52DE9B;
+      --success-bg: #103628;
+      --error: #F1897C;
+      --error-bg: #3A1B16;
+      --border: #294744;
+      --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D;
+    --surface: #16302E;
+    --surface-alt: #1C3A37;
+    --ink: #EAF4F1;
+    --ink-soft: #A9C4BF;
+    --ink-faint: #74928C;
+    --teal: #58D6D1;
+    --teal-deep: #8CE6E1;
+    --teal-soft: #1B3F3C;
+    --amber: #F0A94A;
+    --amber-soft: #3A2C13;
+    --success: #52DE9B;
+    --success-bg: #103628;
+    --error: #F1897C;
+    --error-bg: #3A1B16;
+    --border: #294744;
+    --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Karla', 'Segoe UI', sans-serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft);
+    border: 1px solid var(--border);
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  /* Stepper */
+  nav.stepper {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .6rem;
+  }
+  nav.stepper a {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    padding: .6rem .75rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  /* Hero digit showcase */
+  .hero-showcase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+  .hero-showcase .caption { color: var(--ink-soft); font-size: .92rem; }
+
+  /* ---------- Sections ---------- */
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow);
+  }
+
+  /* Chip selector */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip {
+    font: inherit;
+    font-size: .9rem;
+    padding: .5rem .95rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--on-accent);
+  }
+
+  .item-blurb { color: var(--ink-soft); font-size: .92rem; margin: .2rem 0 0; }
+
+  /* Digit tiles */
+  .digit-row {
+    display: flex;
+    align-items: flex-end;
+    gap: .3rem;
+    flex-wrap: wrap;
+    padding: .3rem 0;
+  }
+  .tile-group { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+  .place-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .62rem;
+    color: var(--ink-faint);
+    text-align: center;
+    max-width: 3.4rem;
+    line-height: 1.1;
+    min-height: 1.6em;
+  }
+  .tile {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    width: clamp(2.1rem, 6vw, 2.9rem);
+    height: clamp(2.6rem, 7vw, 3.4rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .tile:hover { border-color: var(--teal); }
+  .tile.active {
+    background: var(--amber-soft);
+    border-color: var(--amber);
+    color: var(--ink);
+    transform: translateY(-3px);
+  }
+  .tile.sep {
+    background: transparent;
+    border: none;
+    cursor: default;
+    width: .5rem;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .tile.sep.dot {
+    color: var(--teal);
+    font-weight: 700;
+    width: .8rem;
+  }
+  .tile.static { cursor: default; }
+  .tile.static:hover { border-color: var(--border); }
+
+  .explain-box {
+    min-height: 3em;
+    padding: .85rem 1rem;
+    background: var(--teal-soft);
+    border: 1px dashed var(--teal);
+    border-radius: 10px;
+    font-size: .95rem;
+  }
+  .explain-box.placeholder { color: var(--ink-faint); font-style: italic; border-style: dashed; }
+
+  /* Shifter */
+  .shift-controls { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .btn {
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 500;
+    padding: .55rem 1rem;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn.op-mult { border-color: var(--teal); color: var(--teal-deep, var(--teal)); }
+  .btn.op-div { border-color: var(--amber); color: var(--amber); }
+  .btn.ghost { background: transparent; }
+  .btn:hover { filter: brightness(0.97); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn:hover { filter: brightness(1.15); }
+  }
+  :root[data-theme="dark"] .btn:hover { filter: brightness(1.15); }
+
+  .shift-caption { font-size: .95rem; color: var(--ink-soft); }
+  .shift-caption strong { color: var(--ink); }
+
+  /* Practice */
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span {
+    width: .55rem; height: .55rem; border-radius: 50%;
+    background: var(--border);
+  }
+  .progress-dots span.done { background: var(--success); }
+
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: 1.02rem; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit;
+    text-align: left;
+    padding: .7rem .9rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--ink);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle {
+    align-self: flex-start;
+    font-size: .82rem;
+    color: var(--teal);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  /* Vocab intro + sorter */
+  .vocab dt { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.02rem; }
+  .vocab dd { margin: .15rem 0 .9rem; color: var(--ink-soft); }
+  .vocab dd:last-child { margin-bottom: 0; }
+  .vocab strong { color: var(--ink); }
+
+  .sorter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+  @media (max-width: 560px) { .sorter-grid { grid-template-columns: 1fr; } }
+  .sorter-item { display: flex; flex-direction: column; gap: .6rem; }
+  .sorter-item .prompt { font-size: .95rem; margin: 0; }
+  .sorter-item .options { grid-template-columns: 1fr 1fr; }
+  .sorter-item .feedback { min-height: 1.3em; }
+
+  /* Margin asides */
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card {
+    flex: 0 0 232px;
+    background: var(--amber-soft);
+    border-left: 3px solid var(--amber);
+    border-radius: 4px 10px 10px 4px;
+    padding: 1rem 1.1rem;
+  }
+  .aside-card .aside-label {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: .95rem;
+    margin: 0 0 .4rem;
+  }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) {
+    .split { flex-direction: column; }
+    .aside-card { flex-basis: auto; width: 100%; }
+  }
+
+  /* Recap */
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note {
+    color: var(--ink-faint);
+    font-size: .8rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile { transition: none; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Number · A.1 · Year 8</span>
+    <h1>Place Value Explorer</h1>
+    <p class="lede">Every digit in a number has an address — a place that tells you exactly what it's worth. Explore it with real numbers, watch what happens when you multiply and divide by 10, then try it yourself. No clock is running — take as long as you like.</p>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#shift"><span class="num">02</span><span class="label">×10 &amp; ÷10</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: what is each digit worth?</h2></div>
+
+    <div class="split">
+      <div class="split-main">
+        <h3 style="margin:0;">What kind of numbers are we talking about?</h3>
+        <dl class="vocab">
+          <dt>Integers</dt>
+          <dd>Whole numbers — no fractions, no decimal point. 7, 250 and 1,000,000 are all integers. So is −3 (integers can be negative too).</dd>
+          <dt>Decimals</dt>
+          <dd>Numbers with a decimal point, for when a whole number isn't precise enough. "3.5 apples" doesn't really make sense, but <strong>3.5 kilometres</strong> does — the decimal point lets us talk about the bit <em>between</em> whole numbers.</dd>
+          <dt>Measures</dt>
+          <dd>Numbers that describe a real quantity using a unit — how long, how heavy, how much liquid, how much time, how much money. Your height (1.62 m), the weight of an apple (150 g), the milk left in the bottle (1.5 l), how long break lasts (20 minutes), the price of a pencil (35p) — all measures. Notice they can be whole numbers <em>or</em> decimals, depending on how precise you need to be.</dd>
+        </dl>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">💡 Precision</p>
+        <p>A ruler can measure your height as 1.6 m, or more precisely as 1.62 m, or even 1.624 m. Each extra decimal place isn't a different number — it's the <em>same</em> height, just measured more precisely. A road sign says the distance is 12 km — nobody needs to know it's really 12.347 km to know when to turn off.</p>
+      </aside>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 .3rem;">Spot the measure</h3>
+      <p class="intro" style="margin:0 0 1rem;">A measure always has a unit attached, and it's describing "how much" of something. Sort these into the right pile.</p>
+      <div class="sorter-grid" id="sorter-grid"></div>
+    </div>
+
+    <div class="hero-showcase">
+      <div id="hero-digits" class="digit-row"></div>
+      <p class="caption">↑ That's the average distance from Earth to the Moon, in kilometres. Tap any digit below to find out what it's really worth.</p>
+    </div>
+
+    <p class="intro">Now pick a real number below, then click on its digits one at a time. Each digit's position — its <em>place</em> — decides its true value.</p>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card">
+          <div class="chip-row" id="explore-chips" role="group" aria-label="Choose a number to explore"></div>
+          <p class="item-blurb" id="explore-blurb"></p>
+          <div id="explore-digits" class="digit-row" style="margin-top:1rem"></div>
+          <div id="explore-explain" class="explain-box placeholder">Tap a digit above to see what it's worth.</div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">0️⃣ The zero that isn't nothing</p>
+        <p>In 306, the zero looks like it's doing nothing — but take it out and you get 36, a completely different number. The zero holds the tens place empty so the 3 stays in the hundreds where it belongs. Same idea in 0.05: the zero after the point keeps the 5 in the hundredths place, not the tenths.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= SHIFT ================= -->
+  <section id="shift">
+    <div class="section-head"><span class="index">02</span><h2>What happens when you ×10 or ÷10?</h2></div>
+    <p class="intro">Multiplying or dividing by 10, 100 or 1000 doesn't change the digits themselves — it slides every digit sideways. Pick something real, then try it.</p>
+
+    <div class="card">
+      <div class="chip-row" id="shift-chips" role="group" aria-label="Choose a starting amount"></div>
+      <p class="item-blurb" id="shift-blurb"></p>
+
+      <div id="shift-digits" class="digit-row" style="margin:1rem 0"></div>
+
+      <div class="shift-controls">
+        <button class="btn op-mult" data-factor="10">× 10</button>
+        <button class="btn op-mult" data-factor="100">× 100</button>
+        <button class="btn op-mult" data-factor="1000">× 1000</button>
+        <button class="btn op-div" data-factor="0.1">÷ 10</button>
+        <button class="btn op-div" data-factor="0.01">÷ 100</button>
+        <button class="btn op-div" data-factor="0.001">÷ 1000</button>
+        <button class="btn ghost" id="shift-reset">Reset</button>
+      </div>
+
+      <p class="shift-caption" id="shift-caption" style="margin-top:1rem"></p>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="progress-row">
+          <span>So far:</span>
+          <div class="progress-dots" id="progress-dots"></div>
+          <span id="progress-text">0 of 4 explored</span>
+        </div>
+
+        <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">⚠️ Watch out</p>
+        <p>Which is bigger, 0.5 or 0.25? It's tempting to think 25 "looks bigger" than 5 — but 0.5 is a half, and 0.25 is a quarter, so 0.5 wins. More digits after the point doesn't mean a bigger number; it's still the place value that decides.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>Every digit's value depends on its <strong>place</strong> — the same digit can mean 8, 80, or 80,000 depending on where it sits.</span></li>
+        <li><span class="tick">✓</span><span>After the decimal point, places get <strong>smaller</strong>: tenths, then hundredths, then thousandths.</span></li>
+        <li><span class="tick">✓</span><span>Multiplying by 10, 100 or 1000 shifts digits <strong>left</strong>; dividing shifts them <strong>right</strong>.</span></li>
+        <li><span class="tick">✓</span><span>This shows up everywhere — prices, distances, race times, recipe quantities.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref A.1 (sub-skills A.1.1–A.1.4) · Place Value Explorer · a Number strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Reusable building block 1: place-value digit tiles
+     renderDigitRow() and the place-value math are written
+     standalone so every future Number lesson can reuse them
+     rather than re-implementing digit/place logic per lesson.
+     ========================================================= */
+
+  const PLACE_NAMES = {
+    6: "millions", 5: "hundred thousands", 4: "ten thousands", 3: "thousands",
+    2: "hundreds", 1: "tens", 0: "ones",
+    "-1": "tenths", "-2": "hundredths", "-3": "thousandths"
+  };
+
+  function placeName(power) { return PLACE_NAMES[power] || ("10^" + power); }
+
+  function formatInt(n) { return Math.round(n).toLocaleString('en-GB'); }
+
+  function digitPlaceValue(digit, power) {
+    return digit * Math.pow(10, power);
+  }
+
+  function formatPlaceValue(digit, power, item) {
+    const raw = digitPlaceValue(digit, power);
+    const prefix = (item && item.prefix) || "";
+    const suffix = (item && power >= 0 && item.suffix) || "";
+    if (power >= 0) return prefix + formatInt(raw) + suffix;
+    return prefix + raw.toFixed(-power);
+  }
+
+  // Builds the tile markup for a number string like "384400" or "9.58"
+  function buildTiles(numStr) {
+    const [intPart, decPart] = numStr.split(".");
+    const tiles = [];
+    const intLen = intPart.length;
+    for (let i = 0; i < intLen; i++) {
+      const power = intLen - 1 - i;
+      tiles.push({ digit: intPart[i], power });
+      const remaining = intLen - 1 - i;
+      if (remaining > 0 && remaining % 3 === 0) tiles.push({ sep: "," });
+    }
+    if (decPart) {
+      tiles.push({ sep: ".", dot: true });
+      for (let j = 0; j < decPart.length; j++) {
+        tiles.push({ digit: decPart[j], power: -(j + 1) });
+      }
+    }
+    return tiles;
+  }
+
+  function renderDigitRow(container, numStr, opts) {
+    opts = opts || {};
+    container.innerHTML = "";
+    const tiles = buildTiles(numStr);
+    tiles.forEach(t => {
+      const group = document.createElement("div");
+      group.className = "tile-group";
+
+      if (t.sep) {
+        const el = document.createElement("div");
+        el.className = "tile sep" + (t.dot ? " dot" : "");
+        el.textContent = t.sep;
+        el.setAttribute("aria-hidden", "true");
+        group.appendChild(document.createElement("div")).className = "place-label";
+        group.appendChild(el);
+      } else {
+        const label = document.createElement("div");
+        label.className = "place-label";
+        label.textContent = opts.showLabels ? placeName(t.power) : "";
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "tile" + (opts.interactive === false ? " static" : "");
+        el.textContent = t.digit;
+        el.setAttribute("aria-label", "digit " + t.digit + ", " + placeName(t.power) + " place");
+        el.dataset.power = t.power;
+        el.dataset.digit = t.digit;
+        if (opts.interactive !== false) {
+          el.addEventListener("click", () => opts.onDigitClick && opts.onDigitClick(t.digit, t.power, el, container));
+        }
+        group.appendChild(label);
+        group.appendChild(el);
+      }
+      container.appendChild(group);
+    });
+  }
+
+  /* =========================================================
+     Section 01 — "Spot the measure" concept check
+     (small sibling of the practice-question renderer below:
+     two options instead of four, feedback instead of a hint)
+     ========================================================= */
+
+  const SORT_ITEMS = [
+    { id: "bag", prompt: "Weight of your school bag (4.2 kg)", isMeasure: true, explain: "A mass, in kilograms — a measure." },
+    { id: "bus", prompt: "A bus route number (the 42 bus)", isMeasure: false, explain: "Just a label to tell buses apart — not a quantity of anything." },
+    { id: "sleep", prompt: "How long you slept last night (8.5 hours)", isMeasure: true, explain: "A measure of time, in hours." },
+    { id: "shoe", prompt: "Your shoe size", isMeasure: false, explain: "A sizing label, not a real-world quantity with a unit." },
+    { id: "temp", prompt: "The temperature outside (18°C)", isMeasure: true, explain: "A measure of temperature, in degrees Celsius." },
+    { id: "phone", prompt: "A phone number", isMeasure: false, explain: "An identifier — it doesn't measure how much of anything." }
+  ];
+
+  function renderSortItem(item, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card sorter-item";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = item.prompt;
+    wrap.appendChild(prompt);
+
+    const options = document.createElement("div");
+    options.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+
+    [true, false].forEach(value => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = value ? "Measure" : "Not a measure";
+      btn.addEventListener("click", () => {
+        const isCorrect = value === item.isMeasure;
+        options.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = item.explain;
+          feedback.className = "feedback correct-text";
+          options.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another look.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      options.appendChild(btn);
+    });
+
+    wrap.appendChild(options);
+    wrap.appendChild(feedback);
+    container.appendChild(wrap);
+  }
+
+  const sorterGrid = document.getElementById("sorter-grid");
+  SORT_ITEMS.forEach(item => renderSortItem(item, sorterGrid));
+
+  /* =========================================================
+     Section 01 — Explore
+     ========================================================= */
+
+  const EXPLORE_ITEMS = [
+    { id: "moon", label: "Distance to the Moon", value: "384400", suffix: " km", blurb: "The average distance from Earth to the Moon." },
+    { id: "sprint", label: "Fastest 100m ever run", value: "9.58", suffix: " s", blurb: "Usain Bolt's 100 metre world record, in seconds." },
+    { id: "choc", label: "Chocolate bar price", value: "1.25", prefix: "£", blurb: "A fairly typical price for a bar of chocolate." }
+  ];
+
+  let exploreItem = EXPLORE_ITEMS[0];
+
+  function renderExploreChips() {
+    const row = document.getElementById("explore-chips");
+    row.innerHTML = "";
+    EXPLORE_ITEMS.forEach(item => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = item.label;
+      chip.setAttribute("aria-pressed", String(item.id === exploreItem.id));
+      chip.addEventListener("click", () => { exploreItem = item; refreshExplore(); });
+      row.appendChild(chip);
+    });
+  }
+
+  function refreshExplore() {
+    renderExploreChips();
+    document.getElementById("explore-blurb").textContent = exploreItem.blurb;
+    const box = document.getElementById("explore-explain");
+    box.textContent = "Tap a digit above to see what it's worth.";
+    box.className = "explain-box placeholder";
+    renderDigitRow(document.getElementById("explore-digits"), exploreItem.value, {
+      showLabels: true,
+      onDigitClick: (digit, power, el, container) => {
+        container.querySelectorAll(".tile.active").forEach(t => t.classList.remove("active"));
+        el.classList.add("active");
+        const formatted = formatPlaceValue(Number(digit), power, exploreItem);
+        box.className = "explain-box";
+        box.innerHTML = `This <strong>${digit}</strong> is in the <strong>${placeName(power)}</strong> place — worth <strong>${formatted}</strong>.`;
+      }
+    });
+  }
+
+  // Hero showcase uses the same renderer, fixed to the Moon example
+  renderDigitRow(document.getElementById("hero-digits"), "384400", { showLabels: false, interactive: false });
+
+  refreshExplore();
+
+  /* =========================================================
+     Section 02 — ×10 / ÷10 shifter
+     ========================================================= */
+
+  const SHIFT_ITEMS = [
+    { id: "sugar", label: "Sugar for a recipe (serves 1)", start: 25, suffix: " g", context: "This recipe for 1 person needs" },
+    { id: "choc2", label: "Price of one chocolate bar", start: 1.25, prefix: "£", context: "One chocolate bar costs" }
+  ];
+
+  let shiftItem = SHIFT_ITEMS[0];
+  let currentValue = shiftItem.start;
+
+  function toValueString(value) {
+    // Keep sensible precision, then format for tile rendering (no thousands commas here — buildTiles adds them)
+    const rounded = Math.round(value * 1e6) / 1e6;
+    return String(rounded);
+  }
+
+  function formatWithUnit(value, item) {
+    const rounded = Math.round(value * 1e6) / 1e6;
+    const [, dec] = String(rounded).split(".");
+    const text = dec ? rounded.toFixed(Math.min(dec.length, 3)) : formatInt(rounded);
+    return (item.prefix || "") + text + (item.suffix || "");
+  }
+
+  function renderShiftChips() {
+    const row = document.getElementById("shift-chips");
+    row.innerHTML = "";
+    SHIFT_ITEMS.forEach(item => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = item.label;
+      chip.setAttribute("aria-pressed", String(item.id === shiftItem.id));
+      chip.addEventListener("click", () => { shiftItem = item; currentValue = item.start; refreshShift(null); });
+      row.appendChild(chip);
+    });
+  }
+
+  function refreshShift(lastOp) {
+    renderShiftChips();
+    document.getElementById("shift-blurb").textContent = shiftItem.context + " " + formatWithUnit(shiftItem.start, shiftItem) + ".";
+    renderDigitRow(document.getElementById("shift-digits"), toValueString(currentValue), { showLabels: true, interactive: false });
+    const caption = document.getElementById("shift-caption");
+    if (!lastOp) {
+      caption.innerHTML = `Currently: <strong>${formatWithUnit(currentValue, shiftItem)}</strong>. Press a button to see what happens.`;
+    } else {
+      const dir = lastOp.factor > 1 ? "left" : "right";
+      caption.innerHTML = `<strong>${formatWithUnit(lastOp.before, shiftItem)}</strong> ${lastOp.symbol} = <strong>${formatWithUnit(currentValue, shiftItem)}</strong> — every digit shifted one place to the ${dir}${Math.abs(Math.log10(lastOp.factor)) > 1 ? "s" : ""}.`;
+    }
+  }
+
+  document.querySelectorAll(".shift-controls .btn[data-factor]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const factor = Number(btn.dataset.factor);
+      const before = currentValue;
+      currentValue = Math.round(currentValue * factor * 1e6) / 1e6;
+      const symbol = (factor >= 1 ? "× " + formatInt(factor) : "÷ " + formatInt(1 / factor));
+      refreshShift({ factor, before, symbol });
+    });
+  });
+  document.getElementById("shift-reset").addEventListener("click", () => {
+    currentValue = shiftItem.start;
+    refreshShift(null);
+  });
+
+  refreshShift(null);
+
+  /* =========================================================
+     Section 03 — Practice (generic question renderer, reusable
+     across future lessons: pass in {prompt, options, answerIndex,
+     explain, hint} and it renders itself + tracks completion)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "The Moon is 384,400 km from Earth. What is the value of the digit 8?",
+      options: ["8", "800", "8,000", "80,000"],
+      answerIndex: 3,
+      explain: "The 8 sits in the ten thousands column, so it's worth 8 × 10,000 = 80,000.",
+      hint: "Go back to Explore and line up 384,400 in the place value chart — which column does the 8 land in?"
+    },
+    {
+      id: "q2",
+      prompt: "Usain Bolt ran the 100m in 9.58 seconds. What does the 8 represent?",
+      options: ["8 tens", "8 ones", "8 tenths", "8 hundredths"],
+      answerIndex: 3,
+      explain: "The first digit after the decimal point is tenths, the second is hundredths — so the 8 means 8 hundredths, or 0.08 seconds.",
+      hint: "Count the places after the decimal point one at a time: tenths, then hundredths."
+    },
+    {
+      id: "q3",
+      prompt: "A chocolate bar costs £1.25. What would 100 chocolate bars cost?",
+      options: ["£12.50", "£125", "£1,250", "£13.25"],
+      answerIndex: 1,
+      explain: "Multiplying by 100 shifts every digit two places to the left: £1.25 × 100 = £125.",
+      hint: "Try this exact example in section 02 — pick the chocolate bar and press ×100."
+    },
+    {
+      id: "q4",
+      prompt: "A 2,500 g bag of flour is shared equally into 100 identical small bags. How many grams in each bag?",
+      options: ["2.5 g", "25 g", "250 g", "25,000 g"],
+      answerIndex: 1,
+      explain: "Dividing by 100 shifts every digit two places to the right: 2,500 ÷ 100 = 25 g.",
+      hint: "Dividing undoes multiplying — every digit moves right instead of left."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => {
+    const dot = document.createElement("span");
+    dotsRow.appendChild(dot);
+  });
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

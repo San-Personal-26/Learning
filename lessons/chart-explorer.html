@@ -1,0 +1,1009 @@
+<title>Chart Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared across all lessons — see LESSON_TEMPLATE.md) ---------- */
+  :root {
+    --bg: #F3F6F4; --surface: #FFFFFF; --surface-alt: #E8EFEA;
+    --ink: #1B2A2E; --ink-soft: #526764; --ink-faint: #83938F;
+    --teal: #146B6B; --teal-deep: #0D4A4A; --teal-soft: #DCEEEC;
+    --amber: #C9740B; --amber-soft: #FBE9CE;
+    --success: #1E8E5A; --success-bg: #E3F5EC;
+    --error: #C0392B; --error-bg: #FBEAE7;
+    --border: #D7E1DC; --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+      --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+      --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+      --amber: #F0A94A; --amber-soft: #3A2C13;
+      --success: #52DE9B; --success-bg: #103628;
+      --error: #F1897C; --error-bg: #3A1B16;
+      --border: #294744; --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+    --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+    --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+    --amber: #F0A94A; --amber-soft: #3A2C13;
+    --success: #52DE9B; --success-bg: #103628;
+    --error: #F1897C; --error-bg: #3A1B16;
+    --border: #294744; --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Karla', 'Segoe UI', sans-serif; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft); border: 1px solid var(--border); padding: .3rem .7rem; border-radius: 999px; width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .outcomes-block { display: flex; flex-direction: column; gap: .6rem; }
+  .outcomes-label { margin: 0; font-weight: 600; font-size: .95rem; }
+  .outcomes-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .outcomes-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .ref-tag {
+    flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .03em;
+    color: var(--teal-deep, var(--teal)); background: var(--teal-soft); border: 1px solid var(--border);
+    border-radius: 5px; padding: .1rem .4rem;
+  }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink-soft); }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  .concept-card { display: flex; flex-direction: column; gap: .6rem; }
+  .concept-card .concept-title { display: flex; align-items: center; gap: .6rem; }
+  .concept-card .concept-title .ref-tag { font-size: .72rem; }
+  .concept-card h3 { font-size: 1.15rem; }
+  .concept-card p { margin: 0; color: var(--ink-soft); }
+  .concept-card-figured { flex-direction: row; align-items: center; gap: 1.2rem; }
+  .concept-card-figured .concept-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: .6rem; }
+  @media (max-width: 680px) { .concept-card-figured { flex-direction: column; align-items: stretch; } }
+
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card { flex-basis: auto; width: 100%; } }
+
+  .vocab dt { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.02rem; }
+  .vocab dd { margin: .15rem 0 .9rem; color: var(--ink-soft); }
+  .vocab dd:last-child { margin-bottom: 0; }
+  .vocab strong { color: var(--ink); }
+
+  /* Raw-data wall (Explore hook) */
+  .raw-wall { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .raw-chip-static { font-family: 'IBM Plex Mono', monospace; font-size: .78rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 6px; padding: .25rem .55rem; color: var(--ink-soft); }
+
+  /* Mini illustrative figures inside concept cards */
+  .mini-figure { flex: 0 0 96px; display: flex; align-items: center; justify-content: center; }
+  .mini-bars, .mini-histogram { display: flex; align-items: flex-end; gap: .3rem; height: 64px; }
+  .mini-bars span, .mini-histogram span { display: block; width: 14px; border-radius: 3px 3px 0 0; }
+  .mini-pie { width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto; }
+  .mini-picto { display: flex; gap: .2rem; font-size: 1.3rem; }
+  .mini-table { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; border-collapse: collapse; }
+  .mini-table th, .mini-table td { padding: .15rem .5rem; border: 1px solid var(--border); font-weight: 500; }
+
+  /* Chips (mode switcher, reused for tool + questions) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip { font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+
+  .slider-field label { font-size: .82rem; color: var(--ink-soft); display: block; margin-bottom: .3rem; }
+  input[type="range"].numline-slider {
+    width: 100%; -webkit-appearance: none; appearance: none; background: transparent; margin: .2rem 0 0;
+  }
+  input[type="range"].numline-slider:focus { outline: none; }
+  input[type="range"].numline-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; margin-top: -7px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type="range"].numline-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
+  input[type="range"].numline-slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
+  input[type="range"].numline-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; }
+  input[type="range"].numline-slider.variant-b::-webkit-slider-thumb { background: var(--amber); }
+  input[type="range"].numline-slider.variant-b::-moz-range-thumb { background: var(--amber); }
+  .tool-note { font-size: .85rem; color: var(--ink-faint); }
+
+  /* Frequency table (used throughout the tool as the "given" data) */
+  .freq-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: .92rem; }
+  .freq-table th, .freq-table td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--border); }
+  .freq-table td.count { text-align: right; font-weight: 600; }
+
+  /* Click-to-tally chips */
+  .tally-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .tally-chip { font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: .85rem; padding: .45rem .7rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; display: inline-flex; gap: .35rem; align-items: center; }
+  .tally-chip:disabled { opacity: .45; cursor: default; border-style: dashed; }
+  .tally-chip .tick { color: var(--success); display: none; }
+  .tally-chip:disabled .tick { display: inline; }
+
+  /* Steppers (+/-) */
+  .stepper-row { display: flex; align-items: center; gap: .6rem; }
+  .stepper-btn { font: inherit; font-size: 1rem; width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .stepper-btn:disabled { opacity: .4; cursor: default; }
+  .stepper-value { font-family: 'IBM Plex Mono', monospace; min-width: 1.6rem; text-align: center; font-weight: 600; }
+  .category-row { display: flex; align-items: center; gap: .9rem; padding: .6rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .category-row:last-child { border-bottom: none; }
+  .category-name { flex: 0 0 88px; font-weight: 500; }
+  .category-check { color: var(--success); font-weight: 700; visibility: hidden; margin-left: auto; }
+  .category-check.show { visibility: visible; }
+
+  .tool-layout { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+  .tool-controls { flex: 1 1 260px; min-width: 240px; }
+  .tool-diagram { flex: 0 0 260px; }
+  .tool-diagram svg { width: 100%; height: auto; display: block; }
+  .tool-msg { font-size: .9rem; color: var(--ink-soft); min-height: 1.3em; }
+  .tool-msg.success { color: var(--success); font-weight: 600; }
+
+  /* Pictogram build */
+  .picto-icons { display: flex; gap: .15rem; font-size: 1.3rem; min-width: 8rem; }
+  .picto-half { display: inline-block; clip-path: inset(0 50% 0 0); }
+
+  /* Group-it buckets */
+  .bucket-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  @media (max-width: 620px) { .bucket-grid { grid-template-columns: repeat(2, 1fr); } }
+  .bucket { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: .7rem; text-align: center; cursor: pointer; }
+  .bucket .bucket-label { font-family: 'IBM Plex Mono', monospace; font-size: .8rem; color: var(--ink-soft); }
+  .bucket .bucket-count { font-size: 1.3rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .bucket.flash-wrong { animation: flashWrong .4s; }
+  @keyframes flashWrong { 0%, 100% { background: var(--surface-alt); } 50% { background: var(--error-bg); } }
+  .number-chip { font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: .85rem; width: 2.6rem; height: 2.2rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .number-chip.selected { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .number-chip:disabled { opacity: .4; cursor: default; border-style: dashed; }
+
+  /* Options / questions */
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Statistics · F.2 · Year 8</span>
+    <h1>Chart Explorer</h1>
+    <p class="lede">A list of 24 survey answers is hard to read at a glance — turn it into a table or a chart, and the pattern jumps right out. No clock is running — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">F.2.1</span> Build and read a frequency table from raw data</li>
+        <li><span class="ref-tag">F.2.2</span> Build and read a bar chart</li>
+        <li><span class="ref-tag">F.2.3</span> Build and read a pie chart</li>
+        <li><span class="ref-tag">F.2.4</span> Build and read a pictogram, including half-symbols</li>
+        <li><span class="ref-tag">F.2.5</span> Group numerical data into class intervals and chart it</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#builder"><span class="num">02</span><span class="label">Chart Builder</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: from a messy list to a clear picture</h2></div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>24 students, one question: "How do you get to school?"</h3>
+        <p>Here are all 24 answers, exactly as they were collected — in the order students were asked, not sorted or counted yet. Try reading it and instantly saying which method is most popular. Hard, right? That's exactly the problem charts solve.</p>
+        <div class="raw-wall" id="raw-wall"></div>
+      </div>
+    </div>
+
+    <dl class="vocab">
+      <dt>Categorical data</dt>
+      <dd>Data sorted into named groups rather than measured with numbers — like "Walk", "Car", "Bus" and "Bike" above.</dd>
+      <dt>Frequency</dt>
+      <dd>How many times something happens. "Walk" has a frequency of 9 because 9 students walk to school.</dd>
+      <dt>Frequency table</dt>
+      <dd>A table listing every category alongside its frequency — the first step in turning a messy list into something readable.</dd>
+      <dt>Class interval</dt>
+      <dd>A range used to group numerical data, like "10–19 minutes" — useful when there are too many different exact values to list separately.</dd>
+    </dl>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card concept-card-figured">
+          <div class="concept-body">
+            <div class="concept-title"><span class="ref-tag">F.2.1</span><h3>Frequency tables</h3></div>
+            <p>Go through the raw list once, making a tally mark for each response, then add up the tallies per category. The result is a short table that says everything the long list said — just organised.</p>
+          </div>
+          <div class="mini-figure">
+            <table class="mini-table"><tr><th>Bus</th><td>5</td></tr><tr><th>Car</th><td>7</td></tr><tr><th>Walk</th><td>9</td></tr></table>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">✏️ Why tally in groups of 5?</p>
+        <p>Tally marks are usually bundled in groups of five (four vertical strokes plus a diagonal fifth) so a long list can be counted in fives instead of ones — much faster to check, and much harder to lose your place.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card concept-card-figured">
+          <div class="concept-body">
+            <div class="concept-title"><span class="ref-tag">F.2.2</span><h3>Bar charts</h3></div>
+            <p>Each category gets its own bar; the taller the bar, the higher the frequency. Bar charts make it easy to compare exact amounts at a glance.</p>
+          </div>
+          <div class="mini-figure">
+            <div class="mini-bars">
+              <span style="height:100%; background:var(--teal);"></span>
+              <span style="height:78%; background:var(--teal);"></span>
+              <span style="height:56%; background:var(--teal);"></span>
+              <span style="height:33%; background:var(--teal);"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🥧 Bar chart or pie chart?</p>
+        <p>Reach for a <strong>bar chart</strong> when you want to compare exact counts. Reach for a <strong>pie chart</strong> when you want to show how a total splits into parts — "about a third of the class walks" is a pie-chart kind of statement.</p>
+      </aside>
+    </div>
+
+    <div class="card concept-card concept-card-figured">
+      <div class="concept-body">
+        <div class="concept-title"><span class="ref-tag">F.2.3</span><h3>Pie charts</h3></div>
+        <p>The whole circle represents everyone surveyed; each category gets a slice sized by its share of the total. Bigger slice, bigger share.</p>
+      </div>
+      <div class="mini-figure">
+        <div class="mini-pie" style="background: conic-gradient(var(--teal) 0% 37.5%, var(--amber) 37.5% 66.7%, var(--ink-faint) 66.7% 87.5%, var(--teal-deep, var(--teal)) 87.5% 100%);"></div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card concept-card-figured">
+          <div class="concept-body">
+            <div class="concept-title"><span class="ref-tag">F.2.4</span><h3>Pictograms</h3></div>
+            <p>Instead of bars or slices, a pictogram uses repeated symbols. A key tells you what one symbol is worth — and a half-symbol can represent half that amount.</p>
+          </div>
+          <div class="mini-figure">
+            <div class="mini-picto"><span>🧑</span><span>🧑</span><span class="picto-half">🧑</span></div>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🧑 The half-symbol trick</p>
+        <p>If one symbol = 2 students, then an odd frequency like 9 needs 4 whole symbols <em>and</em> one half-symbol (4 × 2 + 1 = 9) — the half shows that "extra" 1 without needing a brand new symbol.</p>
+      </aside>
+    </div>
+
+    <div class="card concept-card concept-card-figured">
+      <div class="concept-body">
+        <div class="concept-title"><span class="ref-tag">F.2.5</span><h3>Grouping numerical data</h3></div>
+        <p>Journey times like 4, 17, 22 and 33 minutes are all different — far too many exact values to give each its own bar. Instead, group them into equal-width <strong>class intervals</strong> (like 0–9, 10–19, 20–29, 30–39 minutes), then chart the frequency of each interval just like a bar chart.</p>
+      </div>
+      <div class="mini-figure">
+        <div class="mini-histogram">
+          <span style="height:60%; background:var(--amber);"></span>
+          <span style="height:100%; background:var(--amber);"></span>
+          <span style="height:50%; background:var(--amber);"></span>
+          <span style="height:30%; background:var(--amber);"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CHART BUILDER ================= -->
+  <section id="builder">
+    <div class="section-head"><span class="index">02</span><h2>Chart Builder</h2></div>
+    <p class="intro">One class survey, five ways to picture it. Pick a mode below and build the chart yourself — nothing here is timed or scored, just check whether it matches the data.</p>
+
+    <div class="card">
+      <div class="chip-row" id="tool-chips" role="group" aria-label="Choose which chart to build"></div>
+      <div id="tool-body" style="margin-top: 1.2rem;"></div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>A <strong>frequency table</strong> counts how many times each category shows up in the data.</span></li>
+        <li><span class="tick">✓</span><span><strong>Bar charts</strong> are best for comparing exact counts side by side; <strong>pie charts</strong> show how a total splits into parts; <strong>pictograms</strong> use symbols — including half-symbols — to represent frequency.</span></li>
+        <li><span class="tick">✓</span><span>Numerical data (like journey times) can be split into <strong>class intervals</strong> so it can be tallied and charted too.</span></li>
+        <li><span class="tick">✓</span><span>Every chart on this page came from the exact same 24-student survey — just pictured five different ways.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref F.2 (sub-skills F.2.1–F.2.5) · Chart Explorer · a Statistics strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Shared data — one real-life survey, used across every mode
+     ========================================================= */
+
+  const TRANSPORT_RAW = ["Walk","Car","Bus","Walk","Bike","Car","Walk","Bus","Car","Walk","Bike","Bus","Walk","Car","Walk","Bus","Car","Walk","Bike","Bus","Car","Walk","Car","Walk"];
+  const TRANSPORT_CATEGORIES = ["Walk", "Car", "Bus", "Bike"];
+  const TRANSPORT_ICON = { Walk: "🚶", Car: "🚗", Bus: "🚌", Bike: "🚲" };
+  const PIE_COLORS = { Walk: "var(--teal)", Car: "var(--amber)", Bus: "var(--ink-faint)", Bike: "var(--teal-deep, var(--teal))" };
+
+  const MINUTES_RAW = [4, 7, 2, 9, 6, 3, 12, 15, 11, 18, 14, 17, 13, 19, 16, 10, 22, 27, 24, 21, 29, 33, 38, 31];
+  const BUCKETS = [
+    { key: "0-9", label: "0–9", min: 0, max: 9 },
+    { key: "10-19", label: "10–19", min: 10, max: 19 },
+    { key: "20-29", label: "20–29", min: 20, max: 29 },
+    { key: "30-39", label: "30–39", min: 30, max: 39 }
+  ];
+
+  function countBy(arr) {
+    return arr.reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+  }
+
+  const TRANSPORT_FREQ = countBy(TRANSPORT_RAW);
+
+  /* =========================================================
+     Polar-coordinate helpers (same convention as Angle Explorer)
+     — reused here to draw the pie chart wedges.
+     ========================================================= */
+
+  function polarPoint(cx, cy, r, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+  }
+
+  function wedgePath(cx, cy, r, startDeg, endDeg) {
+    const s = polarPoint(cx, cy, r, startDeg);
+    const e = polarPoint(cx, cy, r, endDeg);
+    const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+    return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 0 ${e.x} ${e.y} Z`;
+  }
+
+  /* =========================================================
+     Explore section — render the raw data wall
+     ========================================================= */
+
+  document.getElementById("raw-wall").innerHTML =
+    TRANSPORT_RAW.map(v => `<span class="raw-chip-static">${v}</span>`).join("");
+
+  /* =========================================================
+     Chart Builder — five modes sharing one dataset.
+     Each mode is a standalone render<Mode>() / update<Mode>()
+     pair, per the project's interaction pattern: build the
+     control markup once, then only touch output elements
+     (table cells, SVG attributes, icon rows) on every
+     interaction — never rebuild a live control mid-gesture.
+     ========================================================= */
+
+  /* ---------- Mode 1: Tally it (F.2.1) ---------- */
+
+  let tallyState = [];
+  let tallyCounts = {};
+
+  function renderTally() {
+    tallyState = TRANSPORT_RAW.map(() => false);
+    tallyCounts = {}; TRANSPORT_CATEGORIES.forEach(c => tallyCounts[c] = 0);
+
+    const body = document.getElementById("tool-body");
+    body.innerHTML = `
+      <p class="intro" style="margin:0 0 1rem;">Click each response below to sort it into the frequency table. Watch out — don't count the same one twice!</p>
+      <div class="tally-grid" id="tally-grid" style="margin-bottom:1.2rem;"></div>
+      <table class="freq-table">
+        <thead><tr><th>Transport</th><th style="text-align:right;">Frequency</th></tr></thead>
+        <tbody id="tally-table-body"></tbody>
+      </table>
+      <p class="tool-msg" id="tally-msg" style="margin-top:.8rem;"></p>
+    `;
+
+    const grid = document.getElementById("tally-grid");
+    TRANSPORT_RAW.forEach((val, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tally-chip";
+      btn.innerHTML = `<span>${TRANSPORT_ICON[val]} ${val}</span><span class="tick">✓</span>`;
+      btn.addEventListener("click", () => {
+        if (tallyState[i]) return;
+        tallyState[i] = true;
+        tallyCounts[val]++;
+        btn.disabled = true;
+        document.getElementById("tally-count-" + val).textContent = tallyCounts[val];
+        const doneCount = tallyState.filter(Boolean).length;
+        const msg = document.getElementById("tally-msg");
+        if (doneCount === TRANSPORT_RAW.length) {
+          msg.textContent = "✓ All 24 sorted — that's a complete frequency table.";
+          msg.className = "tool-msg success";
+        } else {
+          msg.textContent = doneCount + " of " + TRANSPORT_RAW.length + " sorted.";
+          msg.className = "tool-msg";
+        }
+      });
+      grid.appendChild(btn);
+    });
+
+    const tbody = document.getElementById("tally-table-body");
+    TRANSPORT_CATEGORIES.forEach(c => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${TRANSPORT_ICON[c]} ${c}</td><td class="count" id="tally-count-${c}">0</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("tally-msg").textContent = "0 of " + TRANSPORT_RAW.length + " sorted.";
+  }
+
+  /* ---------- Mode 2: Bar it (F.2.2) ---------- */
+
+  let barValues = {};
+
+  function renderBarIt() {
+    barValues = {}; TRANSPORT_CATEGORIES.forEach(c => barValues[c] = 0);
+
+    const body = document.getElementById("tool-body");
+    body.innerHTML = `
+      <p class="intro" style="margin:0 0 1rem;">Here's the frequency table from the class survey. Use + and − to grow each bar until it matches.</p>
+      <table class="freq-table" style="margin-bottom:1.2rem;">
+        <thead><tr><th>Transport</th><th style="text-align:right;">Frequency</th></tr></thead>
+        <tbody>${TRANSPORT_CATEGORIES.map(c => `<tr><td>${TRANSPORT_ICON[c]} ${c}</td><td class="count">${TRANSPORT_FREQ[c]}</td></tr>`).join("")}</tbody>
+      </table>
+      <div class="tool-layout">
+        <div class="tool-controls" id="bar-controls"></div>
+        <div class="tool-diagram" id="bar-diagram"></div>
+      </div>
+      <p class="tool-msg" id="bar-msg" style="margin-top:.8rem;"></p>
+    `;
+
+    const controls = document.getElementById("bar-controls");
+    TRANSPORT_CATEGORIES.forEach(c => {
+      const row = document.createElement("div");
+      row.className = "category-row";
+      row.innerHTML = `
+        <span class="category-name">${TRANSPORT_ICON[c]} ${c}</span>
+        <div class="stepper-row">
+          <button type="button" class="stepper-btn" data-cat="${c}" data-dir="-1" aria-label="Decrease ${c}">−</button>
+          <span class="stepper-value" id="bar-value-${c}">0</span>
+          <button type="button" class="stepper-btn" data-cat="${c}" data-dir="1" aria-label="Increase ${c}">+</button>
+        </div>
+        <span class="category-check" id="bar-check-${c}">✓ matches</span>
+      `;
+      controls.appendChild(row);
+    });
+    controls.querySelectorAll(".stepper-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const c = btn.dataset.cat, dir = Number(btn.dataset.dir);
+        barValues[c] = Math.max(0, Math.min(12, barValues[c] + dir));
+        updateBarIt();
+      });
+    });
+
+    buildBarSVGOnce();
+    updateBarIt();
+  }
+
+  function buildBarSVGOnce() {
+    const baseY = 160, barW = 34, gap = 18;
+    let x = 20;
+    const rects = TRANSPORT_CATEGORIES.map(c => {
+      const bx = x; x += barW + gap;
+      return `<rect id="bar-rect-${c}" x="${bx}" y="${baseY}" width="${barW}" height="0" fill="var(--teal)" rx="3"></rect>
+              <text x="${bx + barW / 2}" y="${baseY + 16}" text-anchor="middle" class="mono" style="font-size:10px; fill:var(--ink-soft);">${c}</text>`;
+    }).join("");
+    document.getElementById("bar-diagram").innerHTML = `
+      <svg viewBox="0 0 220 180" role="img" aria-label="Bar chart being built from the survey data">
+        <line x1="15" y1="${baseY}" x2="210" y2="${baseY}" stroke="var(--border)" stroke-width="2" />
+        ${rects}
+      </svg>`;
+  }
+
+  function updateBarIt() {
+    let allMatch = true;
+    TRANSPORT_CATEGORIES.forEach(c => {
+      document.getElementById("bar-value-" + c).textContent = barValues[c];
+      const rect = document.getElementById("bar-rect-" + c);
+      const hpx = (barValues[c] / 12) * 130;
+      rect.setAttribute("height", hpx);
+      rect.setAttribute("y", 160 - hpx);
+      const match = barValues[c] === TRANSPORT_FREQ[c];
+      rect.setAttribute("fill", match ? "var(--success)" : "var(--teal)");
+      document.getElementById("bar-check-" + c).classList.toggle("show", match);
+      if (!match) allMatch = false;
+    });
+    const msg = document.getElementById("bar-msg");
+    if (allMatch) { msg.textContent = "✓ All four bars match the data!"; msg.className = "tool-msg success"; }
+    else { msg.textContent = "Adjust the bars to match the frequency table above."; msg.className = "tool-msg"; }
+  }
+
+  /* ---------- Mode 3: Pie it (F.2.3) ---------- */
+  /* Extends the "two sliders summing to a fixed total" pattern
+     (see Angle Explorer's "at a point" mode) to three free
+     sliders + one computed value, all summing to 24. */
+
+  let pieValues = { Walk: 6, Car: 6, Bus: 6 };
+
+  function pieBike() { return 24 - pieValues.Walk - pieValues.Car - pieValues.Bus; }
+
+  function clampPieSliders() {
+    pieValues.Walk = Math.min(Math.max(pieValues.Walk, 0), 24);
+    pieValues.Car = Math.min(Math.max(pieValues.Car, 0), 24 - pieValues.Walk);
+    pieValues.Bus = Math.min(Math.max(pieValues.Bus, 0), 24 - pieValues.Walk - pieValues.Car);
+  }
+
+  function renderPieIt() {
+    pieValues = { Walk: 6, Car: 6, Bus: 6 };
+
+    const body = document.getElementById("tool-body");
+    body.innerHTML = `
+      <p class="intro" style="margin:0 0 1rem;">The three sliders below share a fixed total of 24 students — Bike always gets whatever's left. Adjust them to match the frequency table.</p>
+      <table class="freq-table" style="margin-bottom:1.2rem;">
+        <thead><tr><th>Transport</th><th style="text-align:right;">Frequency</th></tr></thead>
+        <tbody>${TRANSPORT_CATEGORIES.map(c => `<tr><td>${TRANSPORT_ICON[c]} ${c}</td><td class="count">${TRANSPORT_FREQ[c]}</td></tr>`).join("")}</tbody>
+      </table>
+      <div class="tool-layout">
+        <div class="tool-controls" id="pie-controls">
+          <div class="slider-field">
+            <label for="pie-slider-walk">🚶 Walk — <span id="pie-readout-Walk"></span></label>
+            <input type="range" class="numline-slider" id="pie-slider-walk" min="0" max="24" step="1" value="${pieValues.Walk}">
+          </div>
+          <div class="slider-field">
+            <label for="pie-slider-car">🚗 Car — <span id="pie-readout-Car"></span></label>
+            <input type="range" class="numline-slider variant-b" id="pie-slider-car" min="0" max="${24 - pieValues.Walk}" step="1" value="${pieValues.Car}">
+          </div>
+          <div class="slider-field">
+            <label for="pie-slider-bus">🚌 Bus — <span id="pie-readout-Bus"></span></label>
+            <input type="range" class="numline-slider" id="pie-slider-bus" min="0" max="${24 - pieValues.Walk - pieValues.Car}" step="1" value="${pieValues.Bus}">
+          </div>
+          <p class="tool-note">🚲 Bike gets what's left: <strong id="pie-bike-value"></strong></p>
+        </div>
+        <div class="tool-diagram" id="pie-diagram"></div>
+      </div>
+      <div id="pie-legend" style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:.4rem;"></div>
+      <p class="tool-msg" id="pie-msg" style="margin-top:.6rem;"></p>
+    `;
+
+    document.getElementById("pie-slider-walk").addEventListener("input", e => { pieValues.Walk = Number(e.target.value); updatePieIt(); });
+    document.getElementById("pie-slider-car").addEventListener("input", e => { pieValues.Car = Number(e.target.value); updatePieIt(); });
+    document.getElementById("pie-slider-bus").addEventListener("input", e => { pieValues.Bus = Number(e.target.value); updatePieIt(); });
+
+    updatePieIt();
+  }
+
+  function buildPieSVG(vals) {
+    const cx = 90, cy = 90, r = 78;
+    let angle = 90;
+    const wedges = TRANSPORT_CATEGORIES.map(c => {
+      const deg = (vals[c] / 24) * 360;
+      if (deg <= 0) return "";
+      const start = angle, end = angle + deg;
+      angle = end;
+      return `<path d="${wedgePath(cx, cy, r, start, end)}" fill="${PIE_COLORS[c]}" stroke="var(--surface)" stroke-width="2"></path>`;
+    }).join("");
+    return `<svg viewBox="0 0 180 180" role="img" aria-label="Pie chart being built from the survey data">${wedges}</svg>`;
+  }
+
+  function updatePieIt() {
+    clampPieSliders();
+
+    const sliderCar = document.getElementById("pie-slider-car");
+    sliderCar.max = 24 - pieValues.Walk;
+    if (Number(sliderCar.value) !== pieValues.Car) sliderCar.value = pieValues.Car;
+
+    const sliderBus = document.getElementById("pie-slider-bus");
+    sliderBus.max = 24 - pieValues.Walk - pieValues.Car;
+    if (Number(sliderBus.value) !== pieValues.Bus) sliderBus.value = pieValues.Bus;
+
+    const vals = { Walk: pieValues.Walk, Car: pieValues.Car, Bus: pieValues.Bus, Bike: pieBike() };
+
+    document.getElementById("pie-bike-value").textContent = vals.Bike;
+    ["Walk", "Car", "Bus"].forEach(c => { document.getElementById("pie-readout-" + c).textContent = vals[c]; });
+    document.getElementById("pie-diagram").innerHTML = buildPieSVG(vals);
+
+    const legend = TRANSPORT_CATEGORIES.map(c => {
+      const match = vals[c] === TRANSPORT_FREQ[c];
+      return `<span style="display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; color:${match ? "var(--success)" : "var(--ink-soft)"};">
+          <span style="width:.7rem; height:.7rem; border-radius:50%; background:${PIE_COLORS[c]}; display:inline-block;"></span>
+          ${TRANSPORT_ICON[c]} ${c}: ${vals[c]}${match ? " ✓" : ""}
+        </span>`;
+    }).join("");
+    document.getElementById("pie-legend").innerHTML = legend;
+
+    const allMatch = TRANSPORT_CATEGORIES.every(c => vals[c] === TRANSPORT_FREQ[c]);
+    const msg = document.getElementById("pie-msg");
+    if (allMatch) { msg.textContent = "✓ Every slice matches the data!"; msg.className = "tool-msg success"; }
+    else { msg.textContent = "Keep adjusting — check each slider's number against the table."; msg.className = "tool-msg"; }
+  }
+
+  /* ---------- Mode 4: Picto it (F.2.4) ---------- */
+
+  let pictoValues = {};
+
+  function renderPictoIt() {
+    pictoValues = {}; TRANSPORT_CATEGORIES.forEach(c => pictoValues[c] = 0);
+
+    const body = document.getElementById("tool-body");
+    body.innerHTML = `
+      <p class="intro" style="margin:0 0 1rem;">Key: each 🧑 symbol stands for <strong>2 students</strong> — half a symbol means 1 student. Use + and − to build each row.</p>
+      <table class="freq-table" style="margin-bottom:1.2rem;">
+        <thead><tr><th>Transport</th><th style="text-align:right;">Frequency</th></tr></thead>
+        <tbody>${TRANSPORT_CATEGORIES.map(c => `<tr><td>${TRANSPORT_ICON[c]} ${c}</td><td class="count">${TRANSPORT_FREQ[c]}</td></tr>`).join("")}</tbody>
+      </table>
+      <div id="picto-rows"></div>
+      <p class="tool-msg" id="picto-msg" style="margin-top:.8rem;"></p>
+    `;
+
+    const rows = document.getElementById("picto-rows");
+    TRANSPORT_CATEGORIES.forEach(c => {
+      const row = document.createElement("div");
+      row.className = "category-row";
+      row.innerHTML = `
+        <span class="category-name">${TRANSPORT_ICON[c]} ${c}</span>
+        <div class="stepper-row">
+          <button type="button" class="stepper-btn" data-cat="${c}" data-dir="-1" aria-label="Remove half a symbol from ${c}">−</button>
+          <span class="stepper-value" id="picto-value-${c}">0</span>
+          <button type="button" class="stepper-btn" data-cat="${c}" data-dir="1" aria-label="Add half a symbol to ${c}">+</button>
+        </div>
+        <div class="picto-icons" id="picto-icons-${c}"></div>
+        <span class="category-check" id="picto-check-${c}">✓ matches</span>
+      `;
+      rows.appendChild(row);
+    });
+    rows.querySelectorAll(".stepper-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const c = btn.dataset.cat, dir = Number(btn.dataset.dir);
+        pictoValues[c] = Math.max(0, Math.min(12, pictoValues[c] + dir));
+        updatePictoIt();
+      });
+    });
+
+    updatePictoIt();
+  }
+
+  function pictoIconsHTML(value) {
+    const whole = Math.floor(value / 2);
+    const half = value % 2 === 1;
+    let html = "";
+    for (let i = 0; i < whole; i++) html += `<span>🧑</span>`;
+    if (half) html += `<span class="picto-half">🧑</span>`;
+    return html || `<span style="color:var(--ink-faint); font-size:.85rem;">—</span>`;
+  }
+
+  function updatePictoIt() {
+    let allMatch = true;
+    TRANSPORT_CATEGORIES.forEach(c => {
+      document.getElementById("picto-value-" + c).textContent = pictoValues[c];
+      document.getElementById("picto-icons-" + c).innerHTML = pictoIconsHTML(pictoValues[c]);
+      const match = pictoValues[c] === TRANSPORT_FREQ[c];
+      document.getElementById("picto-check-" + c).classList.toggle("show", match);
+      if (!match) allMatch = false;
+    });
+    const msg = document.getElementById("picto-msg");
+    if (allMatch) { msg.textContent = "✓ Every row matches — nice reading of the half-symbols!"; msg.className = "tool-msg success"; }
+    else { msg.textContent = "Build each row to match the frequency table above."; msg.className = "tool-msg"; }
+  }
+
+  /* ---------- Mode 5: Group it (F.2.5) ---------- */
+
+  let bucketAssigned = [];
+  let selectedIndex = null;
+
+  function renderGroupIt() {
+    bucketAssigned = MINUTES_RAW.map(() => null);
+    selectedIndex = null;
+
+    const body = document.getElementById("tool-body");
+    body.innerHTML = `
+      <p class="intro" style="margin:0 0 1rem;">These are 24 real journey times, in minutes. Click a number, then click the class interval it belongs to.</p>
+      <div class="tally-grid" id="minutes-grid" style="margin-bottom:1.2rem;"></div>
+      <div class="bucket-grid" id="bucket-grid"></div>
+      <div class="tool-diagram" id="group-diagram" style="max-width:320px; margin-top:1.2rem;"></div>
+      <p class="tool-msg" id="group-msg" style="margin-top:.8rem;"></p>
+    `;
+
+    const grid = document.getElementById("minutes-grid");
+    MINUTES_RAW.forEach((val, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "number-chip";
+      btn.textContent = val;
+      btn.addEventListener("click", () => {
+        if (bucketAssigned[i] !== null) return;
+        selectedIndex = (selectedIndex === i) ? null : i;
+        document.querySelectorAll("#minutes-grid .number-chip").forEach((b, bi) => b.classList.toggle("selected", bi === selectedIndex));
+      });
+      grid.appendChild(btn);
+    });
+
+    const bucketGrid = document.getElementById("bucket-grid");
+    BUCKETS.forEach(b => {
+      const div = document.createElement("div");
+      div.className = "bucket";
+      div.innerHTML = `<div class="bucket-label">${b.label} min</div><div class="bucket-count" id="bucket-count-${b.key}">0</div>`;
+      div.addEventListener("click", () => {
+        if (selectedIndex === null) return;
+        const val = MINUTES_RAW[selectedIndex];
+        const correct = val >= b.min && val <= b.max;
+        const msg = document.getElementById("group-msg");
+        if (correct) {
+          bucketAssigned[selectedIndex] = b.key;
+          const chips = document.querySelectorAll("#minutes-grid .number-chip");
+          chips[selectedIndex].disabled = true;
+          chips[selectedIndex].classList.remove("selected");
+          selectedIndex = null;
+          updateGroupIt();
+        } else {
+          div.classList.remove("flash-wrong");
+          void div.offsetWidth;
+          div.classList.add("flash-wrong");
+          msg.textContent = val + " minutes isn't in " + b.label + " — try another interval.";
+          msg.className = "tool-msg";
+        }
+      });
+      bucketGrid.appendChild(div);
+    });
+
+    buildGroupSVGOnce();
+    updateGroupIt();
+  }
+
+  function buildGroupSVGOnce() {
+    const baseY = 130, barW = 40, gap = 18;
+    let x = 20;
+    const rects = BUCKETS.map(b => {
+      const bx = x; x += barW + gap;
+      return `<rect id="group-rect-${b.key}" x="${bx}" y="${baseY}" width="${barW}" height="0" fill="var(--amber)" rx="3"></rect>
+              <text x="${bx + barW / 2}" y="${baseY + 16}" text-anchor="middle" class="mono" style="font-size:9px; fill:var(--ink-soft);">${b.label}</text>`;
+    }).join("");
+    document.getElementById("group-diagram").innerHTML = `
+      <svg viewBox="0 0 280 160" role="img" aria-label="Grouped bar chart being built from journey times">
+        <line x1="15" y1="${baseY}" x2="270" y2="${baseY}" stroke="var(--border)" stroke-width="2" />
+        ${rects}
+      </svg>`;
+  }
+
+  function updateGroupIt() {
+    const counts = {}; BUCKETS.forEach(b => counts[b.key] = 0);
+    bucketAssigned.forEach(key => { if (key) counts[key]++; });
+
+    let doneCount = 0;
+    BUCKETS.forEach(b => {
+      document.getElementById("bucket-count-" + b.key).textContent = counts[b.key];
+      const rect = document.getElementById("group-rect-" + b.key);
+      const hpx = (counts[b.key] / 10) * 110;
+      rect.setAttribute("height", hpx);
+      rect.setAttribute("y", 130 - hpx);
+      const match = counts[b.key] === countBy(MINUTES_RAW.map(m => BUCKETS.find(bk => m >= bk.min && m <= bk.max).key))[b.key];
+      rect.setAttribute("fill", (match && counts[b.key] > 0) ? "var(--success)" : "var(--amber)");
+      doneCount += counts[b.key];
+    });
+
+    const msg = document.getElementById("group-msg");
+    if (doneCount === MINUTES_RAW.length) {
+      msg.textContent = "✓ All 24 journey times grouped — that's a grouped frequency chart.";
+      msg.className = "tool-msg success";
+    } else {
+      msg.textContent = doneCount + " of " + MINUTES_RAW.length + " sorted.";
+      msg.className = "tool-msg";
+    }
+  }
+
+  /* ---------- Mode switcher ---------- */
+
+  const TOOL_MODES = [
+    { id: "tally", label: "Tally it", render: renderTally },
+    { id: "bar", label: "Bar it", render: renderBarIt },
+    { id: "pie", label: "Pie it", render: renderPieIt },
+    { id: "picto", label: "Picto it", render: renderPictoIt },
+    { id: "group", label: "Group it", render: renderGroupIt }
+  ];
+  let currentTool = TOOL_MODES[0];
+
+  function renderToolChips() {
+    const row = document.getElementById("tool-chips");
+    row.innerHTML = "";
+    TOOL_MODES.forEach(mode => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = mode.label;
+      chip.setAttribute("aria-pressed", String(mode.id === currentTool.id));
+      chip.addEventListener("click", () => {
+        currentTool = mode;
+        renderToolChips();
+        currentTool.render();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  renderToolChips();
+  currentTool.render();
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer,
+     same shape as every other lesson's Practice section)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "The class survey gave these results — Walk 9, Car 7, Bus 5, Bike 3. How many more students walked than took the bus?",
+      options: ["2", "4", "9", "14"],
+      answerIndex: 1,
+      explain: "9 (Walk) − 5 (Bus) = 4.",
+      hint: "Open Tally it or Bar it to see the frequency table again."
+    },
+    {
+      id: "q2",
+      prompt: "In the bar chart for this data, which transport method has the tallest bar?",
+      options: ["Car", "Bus", "Walk", "Bike"],
+      answerIndex: 2,
+      explain: "Walk has the highest frequency (9), so its bar is the tallest.",
+      hint: "Try Bar it and see which bar grows the highest."
+    },
+    {
+      id: "q3",
+      prompt: "What fraction of the whole class of 24 travels by car?",
+      options: ["7/24", "9/24", "5/24", "3/24"],
+      answerIndex: 0,
+      explain: "7 students travel by car out of 24 students in total, so 7/24.",
+      hint: "Car's frequency is 7, and the whole class is 24 students."
+    },
+    {
+      id: "q4",
+      prompt: "Looking at the journey-time groups (0–9, 10–19, 20–29, 30–39 minutes), how many students take at least 20 minutes to get to school?",
+      options: ["5", "3", "8", "15"],
+      answerIndex: 2,
+      explain: "5 students take 20–29 minutes and 3 take 30–39 minutes: 5 + 3 = 8.",
+      hint: "Add the frequencies of the 20–29 and 30–39 groups."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>
