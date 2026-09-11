@@ -1,0 +1,8 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# Personal scratch/planning files not meant for the shared repo
+lessons/*.plan.md
