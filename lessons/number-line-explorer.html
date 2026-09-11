@@ -1,159 +1,14 @@
 <title>Number Line Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Karla:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/shared.css">
 <style>
-  /* ---------- Design tokens (shared with Place Value Explorer) ---------- */
-  :root {
-    --bg: #F3F6F4;
-    --surface: #FFFFFF;
-    --surface-alt: #E8EFEA;
-    --ink: #1B2A2E;
-    --ink-soft: #526764;
-    --ink-faint: #83938F;
-    --teal: #146B6B;
-    --teal-deep: #0D4A4A;
-    --teal-soft: #DCEEEC;
-    --amber: #C9740B;
-    --amber-soft: #FBE9CE;
-    --success: #1E8E5A;
-    --success-bg: #E3F5EC;
-    --error: #C0392B;
-    --error-bg: #FBEAE7;
-    --border: #D7E1DC;
-    --on-accent: #FFFFFF;
-    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0F1E1D;
-      --surface: #16302E;
-      --surface-alt: #1C3A37;
-      --ink: #EAF4F1;
-      --ink-soft: #A9C4BF;
-      --ink-faint: #74928C;
-      --teal: #58D6D1;
-      --teal-deep: #8CE6E1;
-      --teal-soft: #1B3F3C;
-      --amber: #F0A94A;
-      --amber-soft: #3A2C13;
-      --success: #52DE9B;
-      --success-bg: #103628;
-      --error: #F1897C;
-      --error-bg: #3A1B16;
-      --border: #294744;
-      --on-accent: #0F1E1D;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0F1E1D;
-    --surface: #16302E;
-    --surface-alt: #1C3A37;
-    --ink: #EAF4F1;
-    --ink-soft: #A9C4BF;
-    --ink-faint: #74928C;
-    --teal: #58D6D1;
-    --teal-deep: #8CE6E1;
-    --teal-soft: #1B3F3C;
-    --amber: #F0A94A;
-    --amber-soft: #3A2C13;
-    --success: #52DE9B;
-    --success-bg: #103628;
-    --error: #F1897C;
-    --error-bg: #3A1B16;
-    --border: #294744;
-    --on-accent: #0F1E1D;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: 'Karla', 'Segoe UI', sans-serif;
-    line-height: 1.55;
-  }
-  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
-  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
-
-  .page {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 3rem;
-  }
-
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .72rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--teal-deep, var(--teal));
-    background: var(--teal-soft);
-    border: 1px solid var(--border);
-    padding: .3rem .7rem;
-    border-radius: 999px;
-    width: fit-content;
-  }
-  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
-  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
-  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
-
-  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
-  nav.stepper a {
-    display: flex; flex-direction: column; gap: .15rem;
-    padding: .6rem .75rem; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--surface);
-    text-decoration: none; color: var(--ink-soft);
-  }
-  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
-  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
-
-  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
-  .section-head { display: flex; align-items: baseline; gap: .7rem; }
-  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
-  .section-head h2 { font-size: 1.5rem; }
-  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
-
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
-
-  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
-  .chip {
-    font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px;
-    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
-  }
-  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+  /* ---- Number Line Explorer — lesson-specific styles ---- */
   .chip.variant-b[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); }
   .chip:disabled { opacity: .4; cursor: not-allowed; }
-
   .chip-label { font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .35rem; }
 
-  .btn {
-    font: inherit; font-size: .9rem; font-weight: 500; padding: .55rem 1rem; border-radius: 9px;
-    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer;
-  }
-  .btn:hover { filter: brightness(0.97); }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:hover { filter: brightness(1.15); } }
-  :root[data-theme="dark"] .btn:hover { filter: brightness(1.15); }
-
-  .shift-caption { font-size: .95rem; color: var(--ink-soft); }
-  .shift-caption strong { color: var(--ink); }
-
-  /* Vocab */
-  .vocab dt { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.02rem; }
-  .vocab dd { margin: .15rem 0 .9rem; color: var(--ink-soft); }
-  .vocab dd:last-child { margin-bottom: 0; }
-  .vocab strong { color: var(--ink); }
-
-  /* Symbol guide */
   .symbol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
   @media (max-width: 620px) { .symbol-grid { grid-template-columns: repeat(2, 1fr); } }
   .symbol-card { border: 1px solid var(--border); border-radius: 10px; padding: .8rem; background: var(--surface-alt); text-align: center; }
@@ -161,7 +16,6 @@
   .symbol-card .meaning { font-size: .78rem; margin: .3rem 0 .25rem; }
   .symbol-card .example { font-size: .72rem; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; }
 
-  /* Number line */
   .numline-wrap svg { width: 100%; height: auto; display: block; }
   .numline-point.point-a { fill: var(--teal); stroke: var(--surface); stroke-width: 2; }
   .numline-point.point-b { fill: var(--amber); stroke: var(--surface); stroke-width: 2; }
@@ -170,78 +24,17 @@
   .numline-symbol { font-size: 20px; font-weight: 700; fill: var(--ink); }
   .numline-zero-label { font-size: 10px; fill: var(--ink-faint); }
 
-  /* Slider */
-  input[type="range"].numline-slider {
-    width: 100%;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    margin: .2rem 0 0;
-  }
-  input[type="range"].numline-slider:focus { outline: none; }
-  input[type="range"].numline-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
-  input[type="range"].numline-slider::-webkit-slider-thumb {
-    -webkit-appearance: none; margin-top: -7px; width: 20px; height: 20px; border-radius: 50%;
-    background: var(--teal); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
-  }
-  input[type="range"].numline-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
-  input[type="range"].numline-slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
-  input[type="range"].numline-slider::-moz-range-thumb {
-    width: 20px; height: 20px; border-radius: 50%; background: var(--teal); border: 2px solid var(--surface);
-    box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
-  }
-  input[type="range"].numline-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--teal-soft); }
   .slider-endlabels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; margin-top: .3rem; }
 
-  /* Fraction glyph */
   .frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'IBM Plex Mono', monospace; vertical-align: middle; font-weight: 600; }
   .frac .num { border-bottom: 1.5px solid currentColor; padding: 0 .2em .06em; }
   .frac .den { padding: .06em .2em 0; }
 
-  /* Options / cards (question + compare-item share this) */
+  .compare-item { display: flex; flex-direction: column; gap: .8rem; }
+  .compare-item .prompt { font-size: .98rem; margin: 0; }
+
   .sorter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
   @media (max-width: 560px) { .sorter-grid { grid-template-columns: 1fr; } }
-  .question, .compare-item { display: flex; flex-direction: column; gap: .8rem; }
-  .question .prompt, .compare-item .prompt { font-size: .98rem; margin: 0; }
-  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
-  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
-  .option {
-    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink);
-    cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .option.correct { background: var(--success-bg); border-color: var(--success); }
-  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
-  .option:disabled { cursor: default; }
-
-  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
-  .feedback.correct-text { color: var(--success); }
-  .feedback.incorrect-text { color: var(--error); }
-  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
-
-  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
-  .hint-text { font-size: .85rem; color: var(--ink-soft); }
-
-  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
-  .progress-dots { display: flex; gap: .35rem; }
-  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
-  .progress-dots span.done { background: var(--success); }
-
-  /* Margin asides */
-  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
-  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
-  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
-  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
-  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
-  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card { flex-basis: auto; width: 100%; } }
-
-  /* Recap */
-  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
-  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
-  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
-
-  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
 </style>
 
 <div class="page">
@@ -382,6 +175,7 @@
 
 </div>
 
+<script src="../shared/shared.js"></script>
 <script>
 (function () {
   "use strict";
@@ -669,84 +463,15 @@
 
   const solved = new Set();
 
-  function updateProgress() {
-    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
-    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
-      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
-    });
-  }
-
-  function renderQuestion(q, container) {
-    const wrap = document.createElement("div");
-    wrap.className = "card question";
-
-    const prompt = document.createElement("p");
-    prompt.className = "prompt";
-    prompt.textContent = q.prompt;
-    wrap.appendChild(prompt);
-
-    const optionsWrap = document.createElement("div");
-    optionsWrap.className = "options";
-    const feedback = document.createElement("p");
-    feedback.className = "feedback";
-    const explain = document.createElement("div");
-    explain.className = "explain-reveal";
-    explain.hidden = true;
-    explain.textContent = q.explain;
-
-    q.options.forEach((optionText, i) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "option";
-      btn.textContent = optionText;
-      btn.addEventListener("click", () => {
-        const isCorrect = i === q.answerIndex;
-        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
-        if (isCorrect) {
-          btn.classList.add("correct");
-          feedback.textContent = "That's it — well spotted.";
-          feedback.className = "feedback correct-text";
-          explain.hidden = false;
-          solved.add(q.id);
-          updateProgress();
-          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
-        } else {
-          btn.classList.add("incorrect");
-          feedback.textContent = "Not quite — have another go.";
-          feedback.className = "feedback incorrect-text";
-        }
-      });
-      optionsWrap.appendChild(btn);
-    });
-
-    wrap.appendChild(optionsWrap);
-    wrap.appendChild(feedback);
-
-    const hintBtn = document.createElement("button");
-    hintBtn.type = "button";
-    hintBtn.className = "hint-toggle";
-    hintBtn.textContent = "Need a hint?";
-    const hintText = document.createElement("p");
-    hintText.className = "hint-text";
-    hintText.textContent = q.hint;
-    hintText.hidden = true;
-    hintBtn.addEventListener("click", () => {
-      hintText.hidden = !hintText.hidden;
-      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
-    });
-    wrap.appendChild(hintBtn);
-    wrap.appendChild(hintText);
-    wrap.appendChild(explain);
-
-    container.appendChild(wrap);
-  }
-
   const dotsRow = document.getElementById("progress-dots");
   QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
 
   const qContainer = document.getElementById("questions");
-  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
-  updateProgress();
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer, solved, QUESTIONS, () => {
+    ProfileManager.markLessonComplete('number-line-explorer', solved.size);
+  }));
+  updateProgress(solved, QUESTIONS);
+  renderProfileBar('number-line-explorer');
 
 })();
 </script>
