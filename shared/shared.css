@@ -101,6 +101,11 @@ nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6r
 nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
 nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
 
+@media (max-width: 520px) {
+  .page { padding-left: 1rem; padding-right: 1rem; }
+  nav.stepper { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ---------- Sections ---------- */
 section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
 .section-head { display: flex; align-items: baseline; gap: .7rem; }
