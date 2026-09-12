@@ -1,0 +1,802 @@
+<title>Factors &amp; Primes Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* ---------- Design tokens (shared across all lessons — see LESSON_TEMPLATE.md) ---------- */
+  :root {
+    --bg: #F3F6F4; --surface: #FFFFFF; --surface-alt: #E8EFEA;
+    --ink: #1B2A2E; --ink-soft: #526764; --ink-faint: #83938F;
+    --teal: #146B6B; --teal-deep: #0D4A4A; --teal-soft: #DCEEEC;
+    --amber: #C9740B; --amber-soft: #FBE9CE;
+    --success: #1E8E5A; --success-bg: #E3F5EC;
+    --error: #C0392B; --error-bg: #FBEAE7;
+    --border: #D7E1DC; --on-accent: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20,40,38,0.06), 0 6px 18px rgba(20,40,38,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+      --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+      --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+      --amber: #F0A94A; --amber-soft: #3A2C13;
+      --success: #52DE9B; --success-bg: #103628;
+      --error: #F1897C; --error-bg: #3A1B16;
+      --border: #294744; --on-accent: #0F1E1D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1E1D; --surface: #16302E; --surface-alt: #1C3A37;
+    --ink: #EAF4F1; --ink-soft: #A9C4BF; --ink-faint: #74928C;
+    --teal: #58D6D1; --teal-deep: #8CE6E1; --teal-soft: #1B3F3C;
+    --amber: #F0A94A; --amber-soft: #3A2C13;
+    --success: #52DE9B; --success-bg: #103628;
+    --error: #F1897C; --error-bg: #3A1B16;
+    --border: #294744; --on-accent: #0F1E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Karla', 'Segoe UI', sans-serif; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--teal-deep, var(--teal));
+    background: var(--teal-soft); border: 1px solid var(--border); padding: .3rem .7rem; border-radius: 999px; width: fit-content;
+  }
+  header.hero { display: flex; flex-direction: column; gap: 1.1rem; }
+  header.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 700; }
+  header.hero p.lede { margin: 0; max-width: 60ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .outcomes-block { display: flex; flex-direction: column; gap: .6rem; }
+  .outcomes-label { margin: 0; font-weight: 600; font-size: .95rem; }
+  .outcomes-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .outcomes-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .ref-tag {
+    flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .03em;
+    color: var(--teal-deep, var(--teal)); background: var(--teal-soft); border: 1px solid var(--border);
+    border-radius: 5px; padding: .1rem .4rem;
+  }
+
+  nav.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  nav.stepper a { display: flex; flex-direction: column; gap: .15rem; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink-soft); }
+  nav.stepper a .num { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--teal); }
+  nav.stepper a .label { font-size: .85rem; color: var(--ink); font-weight: 500; }
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 1.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: .7rem; }
+  .section-head .index { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 1rem; }
+  .section-head h2 { font-size: 1.5rem; }
+  section > p.intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow); }
+
+  /* Concept cards (detailed sub-topic intros) */
+  .concept-card { display: flex; flex-direction: column; gap: .6rem; }
+  .concept-card .concept-title { display: flex; align-items: center; gap: .6rem; }
+  .concept-card .concept-title .ref-tag { font-size: .72rem; }
+  .concept-card h3 { font-size: 1.15rem; }
+  .concept-card p { margin: 0; color: var(--ink-soft); }
+  .concept-card p.example { color: var(--ink); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; font-size: .92rem; }
+
+  .split { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .split-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .aside-card { flex: 0 0 232px; background: var(--amber-soft); border-left: 3px solid var(--amber); border-radius: 4px 10px 10px 4px; padding: 1rem 1.1rem; }
+  .aside-card .aside-label { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: .95rem; margin: 0 0 .4rem; }
+  .aside-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.5; }
+  @media (max-width: 680px) { .split { flex-direction: column; } .aside-card, .figure-card { flex-basis: auto; width: 100%; } }
+
+  /* Intro figures (definition / mechanics / real-world figure) */
+  .intro-block h3 { font-size: 1.1rem; margin-bottom: .1rem; }
+  .intro-block p { margin: 0; color: var(--ink-soft); }
+  .history-note { background: var(--surface-alt); border-radius: 10px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .5rem; }
+  .history-note h3 { font-size: 1.05rem; }
+  .history-note p { margin: 0; color: var(--ink-soft); }
+  .figure-card {
+    flex: 0 0 240px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  }
+  .figure-card svg { width: 100%; height: auto; display: block; }
+  .figure-caption { margin: 0; font-size: .82rem; line-height: 1.4; color: var(--ink-soft); text-align: center; min-height: 2.8em; display: flex; align-items: center; justify-content: center; }
+
+  /* Chips (mode picker) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: center; }
+  .chip { font: inherit; font-size: .9rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace; }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-accent); }
+
+  /* Options / questions */
+  .question { display: flex; flex-direction: column; gap: .8rem; }
+  .question .prompt { font-size: .98rem; margin: 0; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  @media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+  .option {
+    font: inherit; text-align: left; padding: .7rem .9rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink); cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+  .option.correct { background: var(--success-bg); border-color: var(--success); }
+  .option.incorrect { background: var(--error-bg); border-color: var(--error); }
+  .option:disabled { cursor: default; }
+
+  .feedback { font-size: .92rem; padding: .1rem .1rem 0; min-height: 1.3em; }
+  .feedback.correct-text { color: var(--success); }
+  .feedback.incorrect-text { color: var(--error); }
+  .explain-reveal { font-size: .92rem; color: var(--ink-soft); background: var(--surface-alt); border-radius: 8px; padding: .7rem .9rem; }
+
+  .hint-toggle { align-self: flex-start; font-size: .82rem; color: var(--teal); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hint-text { font-size: .85rem; color: var(--ink-soft); }
+
+  .progress-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--ink-soft); }
+  .progress-dots { display: flex; gap: .35rem; }
+  .progress-dots span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--border); }
+  .progress-dots span.done { background: var(--success); }
+
+  .recap-list { display: flex; flex-direction: column; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+  .recap-list li { display: flex; gap: .6rem; align-items: flex-start; }
+  .recap-list li .tick { color: var(--success); font-family: 'IBM Plex Mono', monospace; }
+
+  footer.note { color: var(--ink-faint); font-size: .8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+
+  /* ---------- Number Explorer (Section 02) ---------- */
+  .number-slider-wrap { display: flex; flex-direction: column; align-items: center; gap: .4rem; margin: 1rem 0 1.4rem; }
+  .number-slider-wrap input[type="range"] { width: 100%; max-width: 420px; }
+  .number-readout { font-size: 1.8rem; font-weight: 700; }
+  .mode-panel { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .mode-panel[hidden] { display: none; }
+
+  .fm-grid { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; width: 100%; }
+  .fm-col { flex: 1 1 200px; display: flex; flex-direction: column; align-items: center; gap: .5rem; text-align: center; }
+  .fm-label { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+  .fm-value { font-size: 1.05rem; }
+  .fm-array svg { width: 140px; height: auto; display: block; margin: 0 auto; }
+
+  .prime-check-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .prime-grid { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; max-width: 520px; }
+  .prime-cell {
+    font-family: 'IBM Plex Mono', monospace; font-size: .78rem; width: 2.1rem; height: 2.1rem;
+    display: flex; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface-alt); color: var(--ink-soft); cursor: pointer;
+    transition: background-color .3s ease, color .3s ease, border-color .3s ease, opacity .3s ease;
+  }
+  .prime-cell.is-prime { background: var(--teal-soft); color: var(--teal-deep, var(--teal)); border-color: var(--teal); }
+  .prime-cell.selected { outline: 3px solid var(--amber); outline-offset: 1px; }
+  .prime-check-result { font-size: 1rem; text-align: center; max-width: 50ch; }
+
+  /* Sieve of Eratosthenes animation state — active while "Run the Sieve" plays.
+     While .sieve-active is on the grid, the normal .is-prime colouring is held
+     back so the animation can reveal primes for itself as the algorithm finds them. */
+  .prime-grid.sieve-active .prime-cell.is-prime { background: var(--surface-alt); color: var(--ink-soft); border-color: var(--border); }
+  .prime-grid.sieve-active .prime-cell.sieve-prime { background: var(--teal-soft); color: var(--teal-deep, var(--teal)); border-color: var(--teal); }
+  .prime-cell.sieve-current { outline: 3px solid var(--amber); outline-offset: 1px; }
+  .prime-cell.sieve-eliminated { opacity: .35; text-decoration: line-through; }
+  .sieve-controls { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; justify-content: center; }
+  .sieve-btn {
+    font: inherit; font-size: .85rem; padding: .5rem 1.1rem; border-radius: 999px; border: 1px solid var(--teal);
+    background: var(--teal); color: var(--on-accent); cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+  }
+  .sieve-btn:disabled { opacity: .6; cursor: default; }
+  .sieve-caption { font-size: .88rem; color: var(--ink-soft); text-align: center; max-width: 55ch; min-height: 1.3em; }
+
+  .factor-tree-levels { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+  .tree-level { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+  .tree-node {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .9rem; background: var(--surface-alt);
+    border: 1px solid var(--border); border-radius: 8px; padding: .35rem .6rem; min-width: 1.8rem; text-align: center;
+  }
+  .tree-node.prime { background: var(--teal-soft); border-color: var(--teal); color: var(--teal-deep, var(--teal)); }
+  .tree-arrow { color: var(--ink-faint); font-size: 1rem; }
+  .tree-result { font-size: 1.05rem; margin-top: .4rem; text-align: center; }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Number · A.3 · Year 8</span>
+    <h1>Factors &amp; Primes Explorer</h1>
+    <p class="lede">Every whole number is built from smaller pieces that divide into it perfectly — finding those pieces is the key to primes, and everything that follows from them. No clock is running here — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">A.3.1</span> Find all the factors, and the first few multiples, of a number</li>
+        <li><span class="ref-tag">A.3.2</span> Decide whether a number is prime or composite</li>
+        <li><span class="ref-tag">A.3.3</span> Break a number down into its prime factorisation</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper" aria-label="Lesson sections">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#explorer"><span class="num">02</span><span class="label">Number Explorer</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <!-- ================= EXPLORE ================= -->
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore: factors, multiples and primes</h2></div>
+
+    <div class="split intro-block">
+      <div class="split-main">
+        <h3>What actually is a factor?</h3>
+        <p>A <strong>factor</strong> of a number divides into it exactly, with nothing left over. A <strong>multiple</strong> is what you get by counting up in that number — its own times-table. Every whole number has at least two factors: 1 and itself.</p>
+      </div>
+      <div class="figure-card">
+        <div id="definition-diagram"></div>
+        <p class="figure-caption">12 arranged as 3 rows of 4 — so 3 and 4 are both factors of 12.</p>
+      </div>
+    </div>
+
+    <div class="intro-block">
+      <h3>How do we find them?</h3>
+      <p>To check if one number is a factor of another, divide and see if it comes out exact — no remainder means it's a factor. To list multiples, just count up in that number: 5, 10, 15, 20... A number with more than two factors is called <strong>composite</strong>; a number with exactly two (1 and itself) is <strong>prime</strong>. Breaking a composite number all the way down into the primes that multiply together to make it is called <strong>prime factorisation</strong>.</p>
+    </div>
+
+    <div class="history-note">
+      <h3>A 2,200-year-old shortcut for finding primes (a bit of history)</h3>
+      <p>Around 200 BCE, the Greek mathematician Eratosthenes devised a simple method for finding every prime number up to a limit: write out all the numbers, then repeatedly cross out the multiples of each prime you find, starting from 2. Whatever's left uncrossed is prime. It's called the <strong>Sieve of Eratosthenes</strong>, and it's exactly the idea behind the Prime Check tool below — try the "Run the Sieve" button there to watch it happen step by step. Around the same time, another Greek mathematician, Euclid, proved that there are <strong>infinitely many primes</strong> — a result still taught the same way today.</p>
+    </div>
+
+    <div class="intro-block">
+      <h3>Why primes and factors matter beyond the classroom</h3>
+      <p>Primes and factors aren't just a classroom idea — cicadas are the clearest example: some species spend exactly 13 or 17 years underground before emerging, and both are prime numbers. Scientists think that's deliberate, evolutionarily speaking — a prime-length cycle is much harder for a predator with a shorter cycle to sync up with, so prime-cycled cicadas get preyed on far less often. Gears use the same idea: a cog with a prime number of teeth wears more evenly, since each tooth meets every tooth on the gear it's turning against before any pattern repeats, instead of the same few teeth always grinding together.</p>
+    </div>
+
+    <p class="intro">Here's each idea in more detail — what it means, and where you'd actually use it.</p>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">A.3.1</span><h3>Factors and multiples</h3></div>
+          <p>A number's <strong>factors</strong> are every number that divides into it exactly. Its <strong>multiples</strong> are what you get multiplying it by 1, 2, 3, and so on. A number can have very few factors or quite a lot — it depends entirely on what divides into it.</p>
+          <p class="example">A school hall needs 24 chairs arranged into equal rows with none left over. The possible row counts are exactly the factors of 24 — 1, 2, 3, 4, 6, 8, 12 or 24 rows all work, but 5 rows would leave chairs over.</p>
+          <div class="figure-card" style="max-width:220px;margin:.2rem auto 0;">
+            <div id="a31-figure"></div>
+            <p class="figure-caption">24 chairs as 4 rows of 6 — 4 and 6 are both factors of 24.</p>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🔁 Every number has at least two factors</p>
+        <p>1 and the number itself always divide in exactly — even for a prime number, those are its <em>only</em> two factors.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">A.3.2</span><h3>Prime or composite?</h3></div>
+          <p>A <strong>prime</strong> number has exactly two factors: 1 and itself. A <strong>composite</strong> number has more than two factors — it can be split into smaller equal groups in at least one other way.</p>
+          <p class="example">17 sweets can only be shared out equally between 1 person (who gets all 17) or 17 people (who get 1 each) — there's no way to split them into equal smaller groups. That's exactly what makes 17 prime.</p>
+          <div class="figure-card" style="max-width:220px;margin:.2rem auto 0;">
+            <div style="display:flex; flex-direction:column; gap:.6rem; align-items:center; width:100%;">
+              <div id="a32-figure-composite" style="width:70px;"></div>
+              <div id="a32-figure-prime" style="width:180px;"></div>
+            </div>
+            <p class="figure-caption">12 makes a neat rectangle (composite) — 13 can only ever form a single line (prime).</p>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🎯 The only even prime</p>
+        <p>2 is the only even prime number — every other even number automatically has 2 as a factor, which means it's always composite.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">A.3.3</span><h3>Prime factorisation</h3></div>
+          <p>Any composite number can be broken all the way down into a product of prime numbers — its <strong>prime factorisation</strong>. Keep splitting each part into two factors until every piece left is prime, and you can't split any further.</p>
+          <p class="example">Splitting a stack of 60 building blocks into smaller and smaller equal piles — 60 into 2 piles of 30, then each 30 into 2 piles of 15, then each 15 into 3 piles of 5 — until nothing splits further is exactly what a factor tree does.</p>
+          <div class="figure-card" style="max-width:260px;margin:.2rem auto 0;">
+            <div id="tree-example-diagram"></div>
+            <p class="figure-caption" id="a33-figure-caption"></p>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">🌳 Order doesn't matter</p>
+        <p>Start splitting 12 as 2 × 6 or as 3 × 4 — either way, you end up with exactly the same primes: 2 × 2 × 3. There's only ever one prime factorisation for any number.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= NUMBER EXPLORER ================= -->
+  <section id="explorer">
+    <div class="section-head"><span class="index">02</span><h2>Number Explorer</h2></div>
+    <p class="intro">Pick a number and switch modes to see its factors and multiples, whether it's prime, and how it breaks down into primes.</p>
+
+    <div class="card">
+      <div class="chip-row" id="mode-chips" role="group" aria-label="Choose a mode"></div>
+
+      <div class="number-slider-wrap">
+        <input type="range" id="number-slider" min="2" max="60" value="12" aria-label="Choose a number from 2 to 60">
+        <p class="number-readout mono" id="number-readout">12</p>
+      </div>
+
+      <div class="mode-panel" id="mode-factors">
+        <div class="fm-grid">
+          <div class="fm-col">
+            <p class="fm-label">Factors of <span class="mono" id="fm-number-a"></span></p>
+            <p class="fm-value mono" id="fm-factors-list"></p>
+            <div class="fm-array" id="fm-array-figure"></div>
+            <p class="figure-caption" id="fm-array-caption"></p>
+          </div>
+          <div class="fm-col">
+            <p class="fm-label">First 5 multiples of <span class="mono" id="fm-number-b"></span></p>
+            <p class="fm-value mono" id="fm-multiples-list"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-panel" id="mode-prime" hidden>
+        <div class="prime-check-wrap">
+          <div class="prime-grid" id="prime-grid"></div>
+          <p class="prime-check-result" id="prime-check-result"></p>
+          <div class="sieve-controls">
+            <button type="button" class="sieve-btn" id="sieve-run-btn">▶ Run the Sieve</button>
+          </div>
+          <p class="sieve-caption" id="sieve-caption"></p>
+        </div>
+      </div>
+
+      <div class="mode-panel" id="mode-tree" hidden>
+        <div class="factor-tree-levels" id="tree-levels"></div>
+        <p class="tree-result mono" id="tree-result"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Try it yourself</h2></div>
+    <p class="intro">Untimed — pick an answer, see if you're right, and try again if you're not. Stuck? Every question has a hint.</p>
+
+    <div class="progress-row">
+      <span>So far:</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <span id="progress-text">0 of 4 explored</span>
+    </div>
+
+    <div id="questions" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </section>
+
+  <!-- ================= RECAP ================= -->
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <div class="card">
+      <ul class="recap-list">
+        <li><span class="tick">✓</span><span>A number's <strong>factors</strong> divide into it exactly, with nothing left over; its <strong>multiples</strong> are what you land on counting up in that number.</span></li>
+        <li><span class="tick">✓</span><span>A <strong>prime</strong> number has exactly two factors — 1 and itself. A <strong>composite</strong> number has more than two.</span></li>
+        <li><span class="tick">✓</span><span>Every composite number breaks down into a unique <strong>prime factorisation</strong> — however you split it, you land on the same primes.</span></li>
+        <li><span class="tick">✓</span><span>The Sieve of Eratosthenes, a method for finding primes devised over 2,000 years ago, still works exactly the same way today.</span></li>
+      </ul>
+    </div>
+    <footer class="note">Covers National Curriculum ref A.3 (sub-skills A.3.1–A.3.3) · Factors &amp; Primes Explorer · a Number strand lesson</footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     Core number-theory helpers — standalone, parameterized,
+     reused across every figure and tool on this page.
+     ========================================================= */
+
+  function isPrime(n) {
+    if (n < 2) return false;
+    for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+    return true;
+  }
+
+  function smallestPrimeFactor(n) {
+    for (let i = 2; i * i <= n; i++) if (n % i === 0) return i;
+    return n; // n itself is prime
+  }
+
+  function getFactors(n) {
+    const factors = [];
+    for (let i = 1; i <= n; i++) if (n % i === 0) factors.push(i);
+    return factors;
+  }
+
+  function getFactorPairs(n) {
+    // ascending by the smaller member; the last pair is closest to a square
+    const pairs = [];
+    for (let i = 1; i * i <= n; i++) if (n % i === 0) pairs.push([i, n / i]);
+    return pairs;
+  }
+
+  function bestArrayPair(n) {
+    const pairs = getFactorPairs(n);
+    return pairs[pairs.length - 1];
+  }
+
+  function getMultiples(n, count) {
+    const arr = [];
+    for (let i = 1; i <= count; i++) arr.push(n * i);
+    return arr;
+  }
+
+  function formatIndexForm(primeList) {
+    const sorted = [...primeList].sort((a, b) => a - b);
+    const counts = {};
+    sorted.forEach(p => { counts[p] = (counts[p] || 0) + 1; });
+    return Object.keys(counts).map(p => {
+      const c = counts[p];
+      return c > 1 ? `${p}<sup>${c}</sup>` : `${p}`;
+    }).join(' &times; ');
+  }
+
+  /* Splits n into levels of {value, prime}, one row of splits at a time,
+     until every entry in the last row is prime. Reused by the static
+     Explore figure and the live Factor Tree mode below. */
+  function buildFactorLevels(n) {
+    let level = [{ value: n, prime: isPrime(n) }];
+    const levels = [level];
+    while (level.some(item => !item.prime)) {
+      const next = [];
+      level.forEach(item => {
+        if (item.prime) {
+          next.push(item);
+        } else {
+          const p = smallestPrimeFactor(item.value);
+          const rest = item.value / p;
+          next.push({ value: p, prime: true });
+          next.push({ value: rest, prime: isPrime(rest) });
+        }
+      });
+      levels.push(next);
+      level = next;
+    }
+    return levels;
+  }
+
+  function renderTreeLevelsInto(containerId, n) {
+    const levels = buildFactorLevels(n);
+    const container = document.getElementById(containerId);
+    container.innerHTML = levels.map((level, i) => {
+      const row = `<div class="tree-level">${level.map(item =>
+        `<span class="tree-node ${item.prime ? 'prime' : ''}">${item.value}</span>`).join('')}</div>`;
+      return i < levels.length - 1 ? row + `<div class="tree-arrow">↓</div>` : row;
+    }).join('');
+    return levels;
+  }
+
+  /* =========================================================
+     Small grid/array figure — reused for the definition figure,
+     the A.3.1 chairs figure, and the A.3.2 composite/prime pair.
+     ========================================================= */
+
+  function buildGridSVG(rows, cols, cellSize) {
+    const cell = cellSize, gap = Math.max(3, Math.round(cellSize * 0.25)), pad = 6;
+    const w = cols * (cell + gap) - gap + pad * 2;
+    const h = rows * (cell + gap) - gap + pad * 2;
+    let rects = '';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = pad + c * (cell + gap);
+        const y = pad + r * (cell + gap);
+        rects += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="4" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="1.5" />`;
+      }
+    }
+    return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${rows} rows of ${cols}">${rects}</svg>`;
+  }
+
+  /* ---- Explore-section static figures ---- */
+  document.getElementById('definition-diagram').innerHTML = buildGridSVG(3, 4, 20);
+  document.getElementById('a31-figure').innerHTML = buildGridSVG(4, 6, 18);
+  document.getElementById('a32-figure-composite').innerHTML = buildGridSVG(3, 4, 10);
+  document.getElementById('a32-figure-prime').innerHTML = buildGridSVG(1, 13, 10);
+
+  const exampleLevels = renderTreeLevelsInto('tree-example-diagram', 60);
+  const examplePrimes = exampleLevels[exampleLevels.length - 1].map(item => item.value);
+  document.getElementById('a33-figure-caption').innerHTML =
+    `60 = ${examplePrimes.join(' &times; ')}, written in index form as ${formatIndexForm(examplePrimes)}.`;
+
+  /* =========================================================
+     Section 02 — Number Explorer
+     Build once: the slider, the mode chips, and the 59 prime-
+     grid cells. Update on input: only the panels' own content.
+     ========================================================= */
+
+  const MODES = [
+    { key: 'factors', label: 'Factors & Multiples' },
+    { key: 'prime', label: 'Prime Check' },
+    { key: 'tree', label: 'Factor Tree' }
+  ];
+
+  function renderModeChips() {
+    const row = document.getElementById('mode-chips');
+    row.innerHTML = '';
+    MODES.forEach((m, i) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = m.label;
+      chip.setAttribute('aria-pressed', String(i === 0));
+      chip.addEventListener('click', () => {
+        row.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+        chip.setAttribute('aria-pressed', 'true');
+        MODES.forEach(mm => {
+          document.getElementById('mode-' + mm.key).hidden = mm.key !== m.key;
+        });
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  function renderPrimeGrid() {
+    const grid = document.getElementById('prime-grid');
+    grid.innerHTML = '';
+    const slider = document.getElementById('number-slider');
+    for (let i = 2; i <= 60; i++) {
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'prime-cell' + (isPrime(i) ? ' is-prime' : '');
+      cell.textContent = String(i);
+      cell.dataset.value = String(i);
+      cell.setAttribute('aria-label', `Choose ${i}`);
+      cell.addEventListener('click', () => {
+        if (sieveRunning) return;
+        slider.value = String(i);
+        updateNumberExplorer(i);
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  /* ---- "Run the Sieve": animates the actual Sieve of Eratosthenes
+     algorithm over the grid above, rather than just displaying a
+     precomputed prime/composite classification. Build-once controls
+     (the button) live in the HTML; this only ever touches cell classes
+     and the caption text, never rebuilds the grid — see the Interactive
+     control pattern in LESSON_TEMPLATE.md. */
+  let sieveRunning = false;
+  const SIEVE_LIMIT = 60;
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function runSieve() {
+    if (sieveRunning) return;
+    sieveRunning = true;
+
+    const grid = document.getElementById('prime-grid');
+    const slider = document.getElementById('number-slider');
+    const btn = document.getElementById('sieve-run-btn');
+    const caption = document.getElementById('sieve-caption');
+    const cells = Array.from(document.querySelectorAll('.prime-cell'));
+    const cellByValue = {};
+    cells.forEach(c => { cellByValue[Number(c.dataset.value)] = c; });
+
+    slider.disabled = true;
+    btn.disabled = true;
+    btn.textContent = '▶ Running…';
+    grid.classList.add('sieve-active');
+    cells.forEach(c => c.classList.remove('sieve-current', 'sieve-eliminated', 'sieve-prime', 'selected'));
+
+    caption.textContent = 'Watch the sieve run: starting from 2, we cross out every multiple of each number still standing.';
+    await delay(700);
+
+    const eliminated = new Set();
+
+    for (let p = 2; p * p <= SIEVE_LIMIT; p++) {
+      if (eliminated.has(p)) continue; // already crossed out earlier — not a pivot
+      const pCell = cellByValue[p];
+      pCell.classList.add('sieve-current');
+      caption.textContent = `${p} hasn't been crossed out, so it's prime — now cross out all its multiples.`;
+      await delay(500);
+
+      for (let m = p * p; m <= SIEVE_LIMIT; m += p) {
+        if (eliminated.has(m)) continue;
+        eliminated.add(m);
+        cellByValue[m].classList.add('sieve-eliminated');
+        await delay(130);
+      }
+      pCell.classList.remove('sieve-current');
+      pCell.classList.add('sieve-prime');
+      await delay(250);
+    }
+
+    cells.forEach(c => {
+      if (!eliminated.has(Number(c.dataset.value))) c.classList.add('sieve-prime');
+    });
+
+    caption.innerHTML = 'Done! Every number left uncrossed is <strong>prime</strong> — everything crossed out is composite.';
+
+    slider.disabled = false;
+    btn.disabled = false;
+    btn.textContent = '↻ Watch it again';
+    sieveRunning = false;
+    updatePrimeCheckPanel(Number(slider.value));
+  }
+
+  function updateFactorsMultiplesPanel(n) {
+    const factors = getFactors(n);
+    const multiples = getMultiples(n, 5);
+    document.getElementById('fm-number-a').textContent = String(n);
+    document.getElementById('fm-number-b').textContent = String(n);
+    document.getElementById('fm-factors-list').textContent = factors.join(', ');
+    document.getElementById('fm-multiples-list').textContent = multiples.join(', ');
+    const [rows, cols] = bestArrayPair(n);
+    document.getElementById('fm-array-figure').innerHTML = buildGridSVG(rows, cols, 18);
+    document.getElementById('fm-array-caption').textContent = rows === 1
+      ? `${n} can only be arranged in a single row of ${cols} — it has just two factors, 1 and ${n}.`
+      : `${n} arranged as ${rows} rows of ${cols} — ${rows} and ${cols} are both factors of ${n}.`;
+  }
+
+  function updatePrimeCheckPanel(n) {
+    document.getElementById('prime-grid').classList.remove('sieve-active');
+    document.querySelectorAll('.prime-cell').forEach(cell => {
+      cell.classList.remove('sieve-current', 'sieve-eliminated', 'sieve-prime');
+      cell.classList.toggle('selected', Number(cell.dataset.value) === n);
+    });
+    const resultEl = document.getElementById('prime-check-result');
+    if (isPrime(n)) {
+      resultEl.innerHTML = `<span class="mono">${n}</span> is <strong>prime</strong> — its only factors are 1 and ${n}.`;
+    } else {
+      resultEl.innerHTML = `<span class="mono">${n}</span> is <strong>composite</strong> — its factors are ${getFactors(n).join(', ')}.`;
+    }
+  }
+
+  function updateFactorTreePanel(n) {
+    const levels = renderTreeLevelsInto('tree-levels', n);
+    const resultEl = document.getElementById('tree-result');
+    if (levels.length === 1) {
+      resultEl.textContent = `${n} is already prime — it can't be split any further.`;
+    } else {
+      const primeList = levels[levels.length - 1].map(item => item.value);
+      resultEl.innerHTML = `${n} = ${primeList.join(' &times; ')} = ${formatIndexForm(primeList)}`;
+    }
+  }
+
+  function updateNumberExplorer(n) {
+    document.getElementById('number-readout').textContent = String(n);
+    updateFactorsMultiplesPanel(n);
+    updatePrimeCheckPanel(n);
+    updateFactorTreePanel(n);
+  }
+
+  function renderNumberExplorer() {
+    renderModeChips();
+    renderPrimeGrid();
+    const slider = document.getElementById('number-slider');
+    slider.addEventListener('input', () => updateNumberExplorer(Number(slider.value)));
+    document.getElementById('sieve-run-btn').addEventListener('click', runSieve);
+    updateNumberExplorer(Number(slider.value));
+  }
+
+  renderNumberExplorer();
+
+  /* =========================================================
+     Section 03 — Practice (generic 4-option question renderer)
+     ========================================================= */
+
+  const QUESTIONS = [
+    {
+      id: "q1",
+      prompt: "Which of these is NOT a factor of 18?",
+      options: ["2", "3", "4", "6"],
+      answerIndex: 2,
+      explain: "18's factors are 1, 2, 3, 6, 9 and 18. 4 doesn't divide 18 exactly (18 ÷ 4 = 4.5), so it's the odd one out.",
+      hint: "Try dividing 18 by each option — does it come out as a whole number?"
+    },
+    {
+      id: "q2",
+      prompt: "Is 29 prime or composite?",
+      options: ["Prime", "Composite"],
+      answerIndex: 0,
+      explain: "No number from 2 up to 5 (since √29 ≈ 5.4) divides evenly into 29, so its only factors are 1 and 29 — it's prime.",
+      hint: "Check whether any number from 2 up to about 5 divides evenly into 29."
+    },
+    {
+      id: "q3",
+      prompt: "What is the prime factorisation of 40?",
+      options: ["2³ × 5", "2² × 5²", "2 × 20", "4 × 10"],
+      answerIndex: 0,
+      explain: "40 = 2 × 2 × 2 × 5 = 2³ × 5. The other options use numbers like 20, 4 and 10, which aren't prime.",
+      hint: "Keep dividing by the smallest prime (2) until you can't any more, then move to the next prime."
+    },
+    {
+      id: "q4",
+      prompt: "Which of these numbers is a multiple of both 4 and 6?",
+      options: ["10", "12", "16", "18"],
+      answerIndex: 1,
+      explain: "12 = 4 × 3 and also 6 × 2, so it's a multiple of both. 10, 16 and 18 are each only a multiple of one of them (or neither).",
+      hint: "List a few multiples of 4 and a few multiples of 6, and look for one that appears in both lists."
+    }
+  ];
+
+  const solved = new Set();
+
+  function updateProgress() {
+    document.getElementById("progress-text").textContent = solved.size + " of " + QUESTIONS.length + " explored";
+    document.querySelectorAll("#progress-dots span").forEach((dot, i) => {
+      dot.classList.toggle("done", solved.has(QUESTIONS[i].id));
+    });
+  }
+
+  function renderQuestion(q, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "card question";
+
+    const prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = q.prompt;
+    wrap.appendChild(prompt);
+
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "options";
+    const feedback = document.createElement("p");
+    feedback.className = "feedback";
+    const explain = document.createElement("div");
+    explain.className = "explain-reveal";
+    explain.hidden = true;
+    explain.textContent = q.explain;
+
+    q.options.forEach((optionText, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.textContent = optionText;
+      btn.addEventListener("click", () => {
+        const isCorrect = i === q.answerIndex;
+        optionsWrap.querySelectorAll(".option").forEach(o => o.classList.remove("correct", "incorrect"));
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.textContent = "That's it — well spotted.";
+          feedback.className = "feedback correct-text";
+          explain.hidden = false;
+          solved.add(q.id);
+          updateProgress();
+          optionsWrap.querySelectorAll(".option").forEach(o => o.disabled = true);
+        } else {
+          btn.classList.add("incorrect");
+          feedback.textContent = "Not quite — have another go.";
+          feedback.className = "feedback incorrect-text";
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    wrap.appendChild(optionsWrap);
+    wrap.appendChild(feedback);
+
+    const hintBtn = document.createElement("button");
+    hintBtn.type = "button";
+    hintBtn.className = "hint-toggle";
+    hintBtn.textContent = "Need a hint?";
+    const hintText = document.createElement("p");
+    hintText.className = "hint-text";
+    hintText.textContent = q.hint;
+    hintText.hidden = true;
+    hintBtn.addEventListener("click", () => {
+      hintText.hidden = !hintText.hidden;
+      hintBtn.textContent = hintText.hidden ? "Need a hint?" : "Hide hint";
+    });
+    wrap.appendChild(hintBtn);
+    wrap.appendChild(hintText);
+    wrap.appendChild(explain);
+
+    container.appendChild(wrap);
+  }
+
+  const dotsRow = document.getElementById("progress-dots");
+  QUESTIONS.forEach(() => dotsRow.appendChild(document.createElement("span")));
+
+  const qContainer = document.getElementById("questions");
+  QUESTIONS.forEach(q => renderQuestion(q, qContainer));
+  updateProgress();
+
+})();
+</script>

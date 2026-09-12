@@ -192,7 +192,7 @@ function renderProfileBar(lessonId) {
 
   const backLink = document.createElement('a');
   backLink.className = 'back-link';
-  backLink.href = '../index.html';
+  backLink.href = '../../../../../index.html';
   backLink.textContent = '← All lessons';
   bar.appendChild(backLink);
 
@@ -203,7 +203,7 @@ function renderProfileBar(lessonId) {
 
   const badge = document.createElement('a');
   badge.className = 'learner-badge';
-  badge.href = '../index.html#profiles';
+  badge.href = '../../../../../index.html#profiles';
   const active = ProfileManager.getActive();
   if (active) {
     badge.textContent = '👤 ' + active.name;

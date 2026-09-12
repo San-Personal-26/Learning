@@ -2,29 +2,41 @@
 
 One line per lesson so a new session (or a new chat) can see exactly where things stand without needing this project's chat history. Update this file whenever a lesson's status changes — treat it as more reliable than memory of past conversations.
 
-## Lessons
+## Repository
 
-| Ref | Lesson (file) | Built | Verified | Published (artifact) | Committed (Tutorial folder) |
+Source is live on GitHub: [San-Personal-26/Learning](https://github.com/San-Personal-26/Learning) (public repo, `main` branch). Restructured 2026-09-12 into a multi-subject layout — see `CLAUDE.md`'s Repository structure section for the full folder scheme (`shared/` for cross-subject code, `subjects/<subject>/` per subject, `docs/LESSON_TEMPLATE.md` for the universal template). GitHub Pages hosting is not yet enabled — see "Up next."
+
+This file currently tracks maths only, since maths is the only subject with lessons built. When a second subject gets its first lesson, split this table by subject (one table per subject, or a `subjects/<subject>/PROGRESS.md` per subject with this file becoming a top-level index) — don't wait until the single table gets unwieldy to do it.
+
+## Lessons — Maths, KS3, Year 8
+
+| Ref | Lesson (file) | Built | Verified | Published (artifact) | Committed (repo) |
 |---|---|---|---|---|---|
-| A.1 | `lessons/place-value-explorer.html` — Place Value Explorer | ✅ | ✅ | ✅ | ✅ |
-| A.2 | `lessons/number-line-explorer.html` — Number Line Explorer | ✅ | ✅ | ⚠️ stale — see Known issues | ⚠️ stale — see Known issues |
-| D.10 | `lessons/angle-explorer.html` — Angle Explorer | ✅ | ✅ | ✅ | ✅ |
-| E.1 | `lessons/probability-explorer.html` — Probability Explorer | ✅ | ✅ | ✅ | ✅ |
-| B.7 | `lessons/equation-balance-explorer.html` — Equation Balance Explorer | ✅ | ✅ | ✅ | ✅ |
+| A.1 | `subjects/maths/ks3/year-8/lessons/place-value-explorer.html` — Place Value Explorer | ✅ | ✅ | ✅ | ✅ |
+| A.2 | `subjects/maths/ks3/year-8/lessons/number-line-explorer.html` — Number Line Explorer | ✅ | ✅ | ⚠️ stale — see Known issues | ⚠️ stale — see Known issues |
+| D.10 | `subjects/maths/ks3/year-8/lessons/angle-explorer.html` — Angle Explorer | ✅ | ✅ | ✅ | ✅ |
+| E.1 | `subjects/maths/ks3/year-8/lessons/probability-explorer.html` — Probability Explorer | ✅ | ✅ | ✅ | ✅ |
+| B.7 | `subjects/maths/ks3/year-8/lessons/equation-balance-explorer.html` — Equation Balance Explorer | ✅ | ✅ | ✅ | ✅ |
+| A.3 | `subjects/maths/ks3/year-8/lessons/factors-primes-explorer.html` — Factors & Primes Explorer (scoped to A.3.1–A.3.3; A.3.4–A.3.6 deferred; Prime Check mode has a "Run the Sieve" step-by-step animation of the Sieve of Eratosthenes) | ✅ | ✅ | ✅ | ✅ |
 
-Legend: **Built** = prototype written. **Verified** = screenshot + scripted interaction check (Playwright) done, including drag-testing any slider. **Published** = live as a Claude Artifact. **Committed** = current version written to the `lessons/` folder on disk.
+Legend: **Built** = prototype written. **Verified** = screenshot + scripted interaction check (Playwright) done, including drag-testing any slider. **Published** = live as a Claude Artifact. **Committed** = current version written to its path in the repo.
 
 ## Known issues
 
-- **A.2 (Number Line Explorer) is out of sync.** A "By the end of this page..." outcomes-block was added to the working copy, but the published artifact and the committed file in `lessons/` still reflect the version *without* it. Repeated attempts to republish the artifact have hung/timed out in the tool itself (not a content or size issue — the file is small); this was paused at the user's request rather than retried. To finish: republish `number-line-explorer.html` as an Artifact (same URL, ends `...d94670a592d4`), then re-send and re-commit the file to `lessons/number-line-explorer.html`.
-- **D.10 (Angle Explorer) intro has minor content overlap.** The new "Where does 360 come from?" history paragraph (in the Explore section) and the existing "🔢 Why 360?" aside-card under D.10.1 now cover overlapping ground (Babylon, base-60, 360's divisors). Not fixed — flagged as a possible trim, not urgent.
-- **B.7 (Equation Balance Explorer) Explore section has no per-concept live figure.** `LESSON_TEMPLATE.md` now asks for each Explore concept to get its own small live figure where practical (as D.10 and E.1 both do); B.7 uses text + a real-life example instead, with the interactive balance tool deferred to Section 02. Deliberate call, not an oversight — the balance tool needs the full equation-picker to mean anything, so a small standalone figure per concept didn't have an obvious shape. Documented per the template's own checklist item; revisit if a good small-figure idea comes up.
+- **A.2 (Number Line Explorer) is out of sync.** A "By the end of this page..." outcomes-block was added to the working copy, but the published artifact and the committed file still reflect the version *without* it. Repeated attempts to republish the artifact have hung/timed out in the tool itself (not a content or size issue — the file is small); this was paused at the user's request rather than retried. To finish: republish `number-line-explorer.html` as an Artifact (same URL, ends `...d94670a592d4`), then re-send and re-commit the file to `subjects/maths/ks3/year-8/lessons/number-line-explorer.html`.
+- **D.10 (Angle Explorer) intro has minor content overlap.** The "Where does 360 come from?" history paragraph (in the Explore section) and the existing "🔢 Why 360?" aside-card under D.10.1 now cover overlapping ground (Babylon, base-60, 360's divisors). Not fixed — flagged as a possible trim, not urgent.
+- **B.7 (Equation Balance Explorer) Explore section has no per-concept live figure.** `docs/LESSON_TEMPLATE.md` asks for each Explore concept to get its own small live figure where practical (as D.10 and E.1 both do); B.7 uses text + a real-life example instead, with the interactive balance tool deferred to Section 02. Deliberate call, not an oversight — the balance tool needs the full equation-picker to mean anything, so a small standalone figure per concept didn't have an obvious shape. Documented per the template's own checklist item; revisit if a good small-figure idea comes up.
 
 ## Up next
 
-**Recommendation: start the consolidation pass described in `CLAUDE.md`'s Development approach**, rather than building another isolated prototype. Its stated trigger — the template holding up "across a handful of sub-skills spanning more than one strand" — is now clearly met: 5 lessons across 4 strands (Number, Geometry, Probability, Algebra), each hand-copying the same design tokens and component patterns without needing a structural rewrite. Next: extract the shared CSS/JS into real reusable files, build a minimal site skeleton (home/curriculum map, navigation between the 5 existing lessons, per-child profile + localStorage progress tracking per CLAUDE.md's Data & persistence section), and migrate each lesson's content into that shared structure as data.
+1. **Complete the repository restructure** (folder layout, doc splits) — see the migration brief used with Claude Code for the exact moves. Verify all six lesson files render correctly from their new paths and that no relative links broke.
+2. **Enable GitHub Pages** on the repo (Settings → Pages → deploy from `main`) so the site has a live URL once there's an `index.html` to serve.
+3. **Move backlog tracking into GitHub Issues + a GitHub Projects Kanban board**, per `CLAUDE.md`'s Workflow section — turn each "Known issues" bullet above and the consolidation-pass work below into real issues, so this file can shrink back to pure status.
+4. **Start the maths consolidation pass described in `CLAUDE.md`'s Development approach**, via Claude Code (Code tab) against the cloned repo, rather than building another isolated prototype. Its stated trigger — the template holding up "across a handful of sub-skills spanning more than one strand" — is now clearly met: 6 lessons across 4 strands (Number, Geometry, Probability, Algebra), each hand-copying the same design tokens and component patterns without needing a structural rewrite. Extract Tier 1 (cross-subject) CSS/JS into `shared/`, Tier 2 (maths-only) into `subjects/maths/shared/`, build a minimal site skeleton (home/curriculum map, navigation between the 6 existing lessons, per-child profile + localStorage progress tracking per `CLAUDE.md`'s Data & persistence section), and migrate each lesson's content into that shared structure as data.
 
-If another prototype is wanted first instead: B.7 only covered one-step and two-step equations (B.7.1–B.7.2) — B.7.3 (unknown on both sides), B.7.4 (brackets) and B.7.5 (word problems) are still open within the same NC ref and would extend the balance-scale metaphor rather than needing a new one. Ratio (strand C) and Statistics (F.2) remain the only completely untouched strands.
+If another prototype is wanted first instead of the consolidation pass: A.3.4–A.3.6 (HCF, LCM, HCF/LCM word problems) are still open within A.3 and would build directly on Factors & Primes Explorer's foundations. B.7 only covered one-step and two-step equations (B.7.1–B.7.2) — B.7.3 (unknown on both sides), B.7.4 (brackets) and B.7.5 (word problems) are still open within the same NC ref. Ratio (strand C) and Statistics (F.2) remain the only completely untouched strands within KS3 maths. See `subjects/maths/MATHS_NOTES.md` for more.
+
+**Beyond maths:** no other subject has started. When one does, add its curriculum reference doc under `subjects/<subject>/curriculum/`, start its lesson table in this file (or a split file, per the note above), and only create a subject addendum doc once real subject-specific conventions emerge — don't pre-write one.
 
 ## Maintenance note
 
