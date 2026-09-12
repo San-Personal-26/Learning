@@ -8,6 +8,15 @@ This is the **universal** structural checklist for every interactive lesson prot
 
 ## Required page structure, in order
 
+**File structure:** Every lesson is an HTML fragment — no `<!DOCTYPE html>`, `<html>`, `<head>`, or `<body>` tags. Start the file with these two lines before anything else:
+
+```html
+<title>Topic Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+```
+
+The viewport meta is required. Without it, mobile browsers render at a default ~980px width and every layout breakpoint — in `shared/shared.css` and in lesson-specific styles — is bypassed entirely.
+
 1. **Header**
    - Eyebrow: `<Strand> · <ref, e.g. A.2> · Year <n>`
    - Title (H1): short and specific, following the `<Topic> Explorer` naming pattern.
@@ -31,6 +40,12 @@ Copy the entire `:root` token block, font imports, and base component CSS from `
 - **Color tokens**: `--bg`, `--surface`, `--surface-alt`, `--ink`, `--ink-soft`, `--ink-faint`, `--teal` / `--teal-deep` / `--teal-soft`, `--amber` / `--amber-soft`, `--success` / `--success-bg`, `--error` / `--error-bg`, `--border`, `--on-accent`, `--shadow` — each with a light definition and a dark-mode override (see any existing lesson file for the exact values and the `prefers-color-scheme` / `[data-theme]` guarding pattern).
 - **Component classes**: `.card`, `.chip` / `.chip[aria-pressed]` (teal = primary selection, `.variant-b` amber = secondary selection), `.split` / `.aside-card` (margin notes), `.option` / `.options` / `.feedback` / `.explain-reveal` / `.hint-toggle`, `.progress-row` / `.progress-dots`, `.recap-list`, `.outcomes-block` / `.outcomes-list` / `.ref-tag`, and the styled `input[type="range"]` slider base.
 - Teal = primary interactive accent; amber = secondary/highlight accent. Don't introduce a new hue for a new lesson without a specific reason — reuse the existing two.
+
+**Responsive design:**
+
+- `shared/shared.css` already handles breakpoints for all shared layout components: `.split` / `.aside-card` collapse at ≤680px; `nav.stepper`, `.options`, and `.page` horizontal padding all adjust at ≤520px. Don't re-declare these in lesson styles.
+- Lesson-specific `<style>` blocks must add their own breakpoints for any custom multi-column or side-by-side layout (a two-panel tool, a grid of interactive tiles, etc.). Use the shared thresholds as a guide: collapse side-by-side panels at ≤680px, collapse multi-column grids at ≤520px.
+- The target minimum width is **375px** (iPhone SE / most Android entry-level phones). Test there before calling a lesson done — no horizontal overflow, no crushed labels, interactive controls reachable with a thumb.
 
 **Subject-specific (Tier 2)**: component classes that only make sense for one subject (e.g. maths's `.frac`, `.numline-*`, `.symbol-grid`) belong in that subject's addendum, not here. Check `subjects/<subject>/` for one before inventing subject-specific markup.
 
@@ -64,3 +79,5 @@ A real bug in an early lesson draft: dragging a slider felt resistive/stuttery �
 - [ ] Any slider/range input **drag-tested**, not just click-to-position tested — dragging must feel smooth, never resistive (see the Interactive control pattern above)?
 - [ ] Design tokens and shared component CSS copied from `shared/styles/` (or an existing lesson, pre-consolidation) rather than redefined?
 - [ ] Any subject-specific addendum (e.g. `subjects/maths/MATHS_NOTES.md`) checked and followed, if one exists for this subject?
+- [ ] `<meta name="viewport" content="width=device-width, initial-scale=1">` present as the second line of the file, immediately after `<title>`?
+- [ ] Tested at 375px viewport width — no horizontal overflow, stepper nav readable as a 2×2 grid, all interactive controls reachable with a thumb?
