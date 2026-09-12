@@ -18,6 +18,7 @@ This file currently tracks maths only, since maths is the only subject with less
 | E.1 | `subjects/maths/ks3/year-8/lessons/probability-explorer.html` — Probability Explorer | ✅ | ✅ | ✅ | ✅ |
 | B.7 | `subjects/maths/ks3/year-8/lessons/equation-balance-explorer.html` — Equation Balance Explorer | ✅ | ✅ | ✅ | ✅ |
 | A.3 | `subjects/maths/ks3/year-8/lessons/factors-primes-explorer.html` — Factors & Primes Explorer (scoped to A.3.1–A.3.3; A.3.4–A.3.6 deferred; Prime Check mode has a "Run the Sieve" step-by-step animation of the Sieve of Eratosthenes) | ✅ | ✅ | ✅ | ✅ |
+| F.2 | `subjects/maths/ks3/year-8/lessons/chart-explorer.html` — Chart Explorer (covers F.2.1–F.2.5: frequency tables, bar charts, pie charts, pictograms, grouped data) | ✅ | ⚠️ | ⚠️ | ✅ |
 
 Legend: **Built** = prototype written. **Verified** = screenshot + scripted interaction check (Playwright) done, including drag-testing any slider. **Published** = live as a Claude Artifact. **Committed** = current version written to its path in the repo.
 
