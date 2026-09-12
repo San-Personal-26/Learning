@@ -4,7 +4,7 @@ One line per lesson so a new session (or a new chat) can see exactly where thing
 
 ## Repository
 
-Source is live on GitHub: [San-Personal-26/Learning](https://github.com/San-Personal-26/Learning) (public repo, `main` branch). Restructured 2026-09-12 into a multi-subject layout — see `CLAUDE.md`'s Repository structure section for the full folder scheme (`shared/` for cross-subject code, `subjects/<subject>/` per subject, `docs/LESSON_TEMPLATE.md` for the universal template). GitHub Pages hosting is not yet enabled — see "Up next."
+Source is live on GitHub: [San-Personal-26/Learning](https://github.com/San-Personal-26/Learning) (public repo, `main` branch). Restructured 2026-09-12 into a multi-subject layout — see `CLAUDE.md`'s Repository structure section for the full folder scheme (`shared/` for cross-subject code, `subjects/<subject>/` per subject, `docs/LESSON_TEMPLATE.md` for the universal template). GitHub Pages is enabled — site is live at [https://san-personal-26.github.io/Learning/](https://san-personal-26.github.io/Learning/).
 
 This file currently tracks maths only, since maths is the only subject with lessons built. When a second subject gets its first lesson, split this table by subject (one table per subject, or a `subjects/<subject>/PROGRESS.md` per subject with this file becoming a top-level index) — don't wait until the single table gets unwieldy to do it.
 
@@ -32,12 +32,11 @@ Legend: **Built** = prototype written. **Verified** = screenshot + scripted inte
 
 ## Up next
 
-1. **Complete the repository restructure** (folder layout, doc splits) — see the migration brief used with Claude Code for the exact moves. Verify all six lesson files render correctly from their new paths and that no relative links broke.
-2. **Enable GitHub Pages** on the repo (Settings → Pages → deploy from `main`) so the site has a live URL once there's an `index.html` to serve.
-3. **Move backlog tracking into GitHub Issues + a GitHub Projects Kanban board**, per `CLAUDE.md`'s Workflow section — turn each "Known issues" bullet above and the consolidation-pass work below into real issues, so this file can shrink back to pure status.
-4. **Start the maths consolidation pass described in `CLAUDE.md`'s Development approach**, via Claude Code (Code tab) against the cloned repo, rather than building another isolated prototype. Its stated trigger — the template holding up "across a handful of sub-skills spanning more than one strand" — is now clearly met: 6 lessons across 4 strands (Number, Geometry, Probability, Algebra), each hand-copying the same design tokens and component patterns without needing a structural rewrite. Extract Tier 1 (cross-subject) CSS/JS into `shared/`, Tier 2 (maths-only) into `subjects/maths/shared/`, build a minimal site skeleton (home/curriculum map, navigation between the 6 existing lessons, per-child profile + localStorage progress tracking per `CLAUDE.md`'s Data & persistence section), and migrate each lesson's content into that shared structure as data.
+1. **Verify and publish F.2 (Chart Explorer)** — screenshot-check, drag-test the pie-chart sliders, publish as a Claude Artifact, then mark Verified ✅ and Published ✅ in the table above.
+2. **Fix A.2 (Number Line Explorer) out-of-sync artifact** — see Known issues above.
+3. **Move backlog tracking into GitHub Issues + a GitHub Projects Kanban board**, per `CLAUDE.md`'s Workflow section — turn each "Known issues" bullet and the open lesson work below into real issues so this file stays short.
 
-If another prototype is wanted first instead of the consolidation pass: A.3.4–A.3.6 (HCF, LCM, HCF/LCM word problems) are still open within A.3 and would build directly on Factors & Primes Explorer's foundations. B.7 only covered one-step and two-step equations (B.7.1–B.7.2) — B.7.3 (unknown on both sides), B.7.4 (brackets) and B.7.5 (word problems) are still open within the same NC ref. Ratio (strand C) and Statistics (F.2) remain the only completely untouched strands within KS3 maths. See `subjects/maths/MATHS_NOTES.md` for more.
+Next lesson candidates: A.3.4–A.3.6 (HCF, LCM, HCF/LCM word problems) build directly on Factors & Primes Explorer. B.7.3–B.7.5 (unknown on both sides, brackets, word problems) extend Equation Balance Explorer. Ratio (strand C) is the only completely untouched strand within KS3 maths. See `subjects/maths/MATHS_NOTES.md` for more.
 
 **Beyond maths:** no other subject has started. When one does, add its curriculum reference doc under `subjects/<subject>/curriculum/`, start its lesson table in this file (or a split file, per the note above), and only create a subject addendum doc once real subject-specific conventions emerge — don't pre-write one.
 
