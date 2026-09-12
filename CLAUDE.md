@@ -60,6 +60,9 @@ docs/
 - Even though each prototype currently duplicates some CSS/JS, write the digit/question/interaction logic as standalone, parameterized functions rather than one-off inline code — this is what makes promotion to a shared tier possible without a rewrite.
 - Once a lesson template pattern has held up across a handful of sub-skills spanning more than one strand within a subject, do a consolidation pass for that subject: extract shared renderers/styles into `subjects/<subject>/shared/` and, where something is proven reusable across subjects too, up into the top-level `shared/`. Migrate finished prototypes' content into that shared structure as data rather than continuing to duplicate boilerplate per lesson.
 - Don't build the site skeleton or a new subject's shared tier before its pattern has stabilized, and don't let duplicated prototype boilerplate pile up indefinitely either.
+- For the concrete step-by-step process — what to sync into a chat session
+before building, and how a finished lesson gets placed, registered, and
+shipped — see `docs/NEW_LESSON_PREREQ.md`.
 
 ## Data & persistence (v1)
 
