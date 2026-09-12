@@ -13,6 +13,7 @@ An interactive learning platform for children, covering the UK National Curricul
 ## Curriculum scope
 
 - Key Stages 2 and 3, built out year-by-year and subject-by-subject rather than all at once. Maths Year 8 (KS3) was the v1 starting point; expansion to other years and subjects follows the same pattern.
+- See `docs/UK_CURRICULUM_OVERVIEW.md` for the general key-stage/year/age structure this scope decision sits within.
 - Content must be built directly from the UK National Curriculum document itself for the relevant subject and key stage — do not mirror a specific exam board's scheme of work. If a topic's framing is ambiguous, go back to the National Curriculum text rather than inferring from a textbook or exam board source.
 - When adding or editing lesson content, cite or reference the relevant National Curriculum objective it maps to (ref codes are per-subject — see each subject's curriculum reference doc under `subjects/<subject>/curriculum/`).
 
