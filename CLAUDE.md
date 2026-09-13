@@ -8,7 +8,7 @@ An interactive learning platform for children, covering the UK National Curricul
 
 - Audience: children across Key Stages 2 and 3 (roughly ages 7–14). Key Stages 4 and 5 are out of scope until further notice.
 - Purpose: personal/family use only. No revenue generation, no public sign-ups.
-- Subjects: maths is the only subject built out so far. Other subjects (English, Science, etc.) are added one at a time, each starting from the same lesson template and folder pattern — see Repository structure below. Don't scaffold folders for a subject that hasn't started yet.
+- Subjects: maths is the only subject built out so far. Science is next — curriculum reference docs exist for all four key stages, and the first science lesson (O.1 Speed) is in progress. Other subjects (English, etc.) are added one at a time, each starting from the same lesson template and folder pattern — see Repository structure below. Don't scaffold folders for a subject that hasn't started yet.
 
 ## Curriculum scope
 
@@ -27,15 +27,17 @@ shared/                          # Tier 1 — reusable across every subject and 
 subjects/<subject>/
   curriculum/                    # National Curriculum reference docs, one per key stage
   shared/                        # Tier 2 — reusable within this subject only
-  <key-stage>/<year>/lessons/    # the actual lesson prototypes/pages
+  <key-stage>/<year>/lessons/    # the actual lesson prototypes/pages, flat within lessons/
 
 docs/
   LESSON_TEMPLATE.md             # universal page structure & checklist, all subjects
 ```
 
-- **Tier 1 (`shared/`)**: things that make sense for any subject — design tokens, `.card`/`.chip`/`.option` component CSS, the practice-question renderer, progress storage. Promote something here only once it's actually been reused across more than one subject; don't pre-guess.
+- **Tier 1 (`shared/`)**: things that make sense for any subject — design tokens, `.card`/`.chip`/`.option` component CSS, the practice-question renderer, progress storage. Promote something here only once it's actually been reused across more than one subject; don't pre-guess. Currently `shared/shared.css` and `shared/shared.js` live flat at the top of `shared/` rather than already split into `styles/`/`scripts/` subfolders shown above — that split is aspirational, not yet done; don't block on it.
 - **Tier 2 (`subjects/<subject>/shared/`)**: reusable within a subject but not general — e.g. maths's number-line SVG helper or digit-tile renderer. A future English equivalent might be a passage-highlighter.
 - **Tier 3 (inline in the lesson file)**: anything still one-off. Every lesson still writes its interaction logic as standalone, parameterized functions (per Development approach below) so it can be promoted to Tier 2 or 1 later without a rewrite.
+- **Lessons are always flat within `lessons/`** — no subfolder per strand, topic, or discipline. This holds for maths (Number, Algebra, Geometry, Probability and Statistics lessons all sit together, distinguished by filename and NC ref like `A.1`, `D.10`) and for science: Biology, Chemistry and Physics lessons sit together under `subjects/science/<key-stage>/<year>/lessons/`, distinguished by NC ref (e.g. `B.1` Biology, `F.3` Chemistry, `O.1` Physics — see `subjects/science/curriculum/` for the strand-to-letter mapping) and filename. Rejected: separate `subjects/biology/`, `subjects/chemistry/`, `subjects/physics/` top-level subjects, or a `lessons/biology/`, `lessons/chemistry/`, `lessons/physics/` split within `subjects/science/`. Reasoning: at KS3–4 those three are close to separate disciplines (and examined separately at GCSE Triple Award), which tempts a split — but at KS1–2 science has no such split at all, it's just "Science" with topics like Plants and Materials. A folder layout that only made sense for KS3–4 would be inconsistent applied across the whole subject, so flat (matching maths) won out. The home page's strand/topic grid still groups lessons visually by discipline — that comes from the site's nav **data structure**, not from folder layout.
+- Every lesson path must sit at the same depth (`subjects/<subject>/<key-stage>/<year>/lessons/*.html`) because `shared/shared.js`'s `renderProfileBar()` hardcodes a 5-level-up relative path (`../../../../../index.html`) for the back-to-home link. A subject that hasn't been sequenced into specific years yet (science, currently) still needs a `<year>` folder to keep this path correct — treat the folder name as a physical bucket, not a claim that the content itself has been sequenced by year (the on-page eyebrow can stay unsequenced, e.g. just "KS3", independent of which folder it's filed under).
 - Each subject's `curriculum/` folder holds one reference doc per key stage (e.g. `ks3-reference.md`), structured the same lettered/numbered way, so ref codes stay a short citable code per subject (e.g. maths `A.3.2`). Lesson pages tag themselves with a year (e.g. "Year 8") even though the source curriculum document is published per key stage, not per year — deciding which statements belong to which year within a key stage is this project's own sequencing call, not something the NC document specifies.
 - If a subject develops conventions that diverge meaningfully from `docs/LESSON_TEMPLATE.md` (e.g. maths's slider-drag interaction pattern or its maths-only CSS classes), document them in a short addendum at `subjects/<subject>/` (e.g. `subjects/maths/MATHS_NOTES.md`), rather than bloating the universal template. Only write one when a real divergence shows up — don't write one speculatively for a subject with no lessons yet.
 
@@ -60,9 +62,7 @@ docs/
 - Even though each prototype currently duplicates some CSS/JS, write the digit/question/interaction logic as standalone, parameterized functions rather than one-off inline code — this is what makes promotion to a shared tier possible without a rewrite.
 - Once a lesson template pattern has held up across a handful of sub-skills spanning more than one strand within a subject, do a consolidation pass for that subject: extract shared renderers/styles into `subjects/<subject>/shared/` and, where something is proven reusable across subjects too, up into the top-level `shared/`. Migrate finished prototypes' content into that shared structure as data rather than continuing to duplicate boilerplate per lesson.
 - Don't build the site skeleton or a new subject's shared tier before its pattern has stabilized, and don't let duplicated prototype boilerplate pile up indefinitely either.
-- For the concrete step-by-step process — what to sync into a chat session
-before building, and how a finished lesson gets placed, registered, and
-shipped — see `docs/NEW_LESSON_PREREQ.md`.
+- For the concrete step-by-step process — what to sync into a chat session before building, and how a finished lesson gets placed, registered, and shipped — see `docs/NEW_LESSON_PREREQ.md`.
 
 ## Data & persistence (v1)
 
@@ -74,9 +74,11 @@ shipped — see `docs/NEW_LESSON_PREREQ.md`.
 ## Workflow
 
 - Source is maintained on GitHub: [San-Personal-26/Learning](https://github.com/San-Personal-26/Learning) (public repo, `main` branch). Public rather than private specifically so the site can be hosted on GitHub Pages for free — GitHub Pages requires a paid plan for private repos.
-- Hosting: GitHub Pages, once a site skeleton with an `index.html` exists (see Development approach). No separate hosting service.
+- Hosting: GitHub Pages — **already live** at https://san-personal-26.github.io/Learning/ (enabled 2026-09-12, once the multi-subject restructure and `index.html` landed).
 - Backlog and feature/task tracking happens via **GitHub Issues + a GitHub Projects Kanban board** — do not introduce a separate project management tool.
 - Built collaboratively using Claude chat (for planning, curriculum-grounded content, and per-lesson prototyping) and Claude Code (for multi-file structural work — folder restructuring, consolidation passes, the site skeleton, and anything spanning more than one file at once).
+- **A claude.ai Project ("Tutorial") mirrors the repo's key docs** (this file, `PROGRESS.md`, `LESSON_TEMPLATE.md`, `shared.css`/`shared.js`, curriculum references, `MATHS_NOTES.md`, `UK_CURRICULUM_OVERVIEW.md`) so a fresh chat session has them without re-uploading. This is a **snapshot, not a live link** — it can drift from the actual repo (it did once, when a Claude Code session restructured the repo without the chat-side Project being updated in step). Re-sync it from the live repo when a chat session notices a mismatch, rather than assuming it's current.
+- Sessions working from the claude.ai Project do not currently have push access to the GitHub repo (the cloud sandbox's git proxy only allows repos explicitly authorized for that session) — a lesson built there gets handed off as a finished file with its exact destination path, for the user (or a Claude Code session with real repo access) to commit.
 
 ## Commands
 

@@ -1,0 +1,392 @@
+<title>Speed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Karla:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../../../shared/shared.css">
+<style>
+  /* ---------- Lesson-specific: O.1 Speed (Tier 2 physics candidate) ---------- */
+
+  /* Formula triangle */
+  .formula-triangle { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+  .formula-triangle svg { width: 200px; height: auto; }
+  .triangle-part { fill: var(--surface-alt); stroke: var(--surface); stroke-width: 3; transition: fill .15s; }
+  .triangle-part.active { fill: var(--teal); }
+  .triangle-label { font-family: 'IBM Plex Mono', monospace; font-size: .78rem; fill: var(--ink); pointer-events: none; }
+  .triangle-label.on-active { fill: var(--on-accent); font-weight: 600; }
+  .triangle-caption { margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: .95rem; color: var(--ink); background: var(--surface-alt); border-radius: 8px; padding: .5rem .9rem; min-height: 1.4em; }
+  .triangle-caption strong { color: var(--teal-deep, var(--teal)); }
+
+  /* Mini readout */
+  .mini-readout { margin: 0; font-size: 1rem; color: var(--ink); }
+  .mini-readout strong { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--teal-deep, var(--teal)); font-size: 1.15rem; }
+
+  /* Track + moving vehicle */
+  .track-wrap { width: 100%; display: flex; flex-direction: column; gap: .3rem; }
+  .track-wrap .track-labels { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: .7rem; color: var(--ink-faint); }
+  .track { position: relative; width: 100%; height: 34px; background: var(--surface-alt); border-radius: 999px; overflow: hidden; }
+  .track .track-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: repeating-linear-gradient(90deg, var(--border) 0 2px, transparent 2px 18px); }
+  .track .track-dot { position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%) scaleX(-1); font-size: 1.3rem; line-height: 1; will-change: left; }
+
+  /* Finder (O.1.2) */
+  .finder-row { display: flex; flex-direction: column; gap: .9rem; width: 100%; }
+  .finder-slider.is-target { opacity: .55; }
+  .finder-slider.is-target input[type="range"] { pointer-events: none; }
+  .finder-target-readout { font-family: 'IBM Plex Mono', monospace; font-size: .78rem; color: var(--teal-deep, var(--teal)); }
+
+  /* Race track (Section 02) */
+  .race-figure { display: flex; flex-direction: column; gap: 1.4rem; }
+  .race-vehicle { display: flex; flex-direction: column; gap: .5rem; }
+  .race-vehicle-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+  .race-vehicle-head h3 { font-size: 1rem; margin: 0; }
+  .race-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+  @media (max-width: 520px) { .race-sliders { grid-template-columns: 1fr; } }
+  .race-verdict { text-align: center; font-size: .95rem; padding: .6rem .9rem; border-radius: 10px; background: var(--teal-soft); color: var(--teal-deep, var(--teal)); font-weight: 600; }
+</style>
+
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">Physics · O.1 · KS3</span>
+    <h1>Speed</h1>
+    <p class="lede">How fast is "fast"? Speed is just distance and time working together — once you can see how they connect, you can work out any one of the three from the other two. No clock is running here — take as long as you like.</p>
+    <div class="outcomes-block">
+      <p class="outcomes-label">By the end of this page, you'll be able to:</p>
+      <ul class="outcomes-list">
+        <li><span class="ref-tag">O.1.1</span> Calculate speed when you know the distance travelled and the time taken</li>
+        <li><span class="ref-tag">O.1.2</span> Rearrange the speed relationship to find distance or time instead</li>
+      </ul>
+    </div>
+  </header>
+
+  <nav class="stepper">
+    <a href="#explore"><span class="num">01</span><span class="label">Explore</span></a>
+    <a href="#race-track"><span class="num">02</span><span class="label">Race Track</span></a>
+    <a href="#practice"><span class="num">03</span><span class="label">Practice</span></a>
+    <a href="#recap"><span class="num">04</span><span class="label">Recap</span></a>
+  </nav>
+
+  <section id="explore">
+    <div class="section-head"><span class="index">01</span><h2>Explore</h2></div>
+
+    <div class="intro-block">
+      <h3>What speed actually is</h3>
+      <p>Speed tells you how much distance something covers in a given amount of time. A "fast" thing covers more distance for the same time than a "slow" one does.</p>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="intro-block">
+          <h3>How it's measured</h3>
+          <p>Speed, distance and time are connected by one relationship: <strong>speed = distance ÷ time</strong>. Once you know any two of them, you can always find the third — the triangle on the right is a quick way to remember which way round to divide or multiply.</p>
+        </div>
+      </div>
+      <aside class="figure-card" style="flex-basis: 260px;">
+        <div class="formula-triangle">
+          <svg viewBox="0 0 200 160">
+            <polygon id="tri-distance" class="triangle-part" points="100,10 55,80 145,80"></polygon>
+            <polygon id="tri-speed" class="triangle-part" points="55,80 10,150 100,150 100,80"></polygon>
+            <polygon id="tri-time" class="triangle-part" points="100,80 100,150 190,150 145,80"></polygon>
+            <line x1="10" y1="150" x2="190" y2="150" stroke="var(--surface)" stroke-width="3"></line>
+            <text id="tri-distance-label" x="100" y="52" text-anchor="middle" class="triangle-label">Distance</text>
+            <text id="tri-speed-label" x="62" y="120" text-anchor="middle" class="triangle-label">Speed</text>
+            <text id="tri-time-label" x="140" y="120" text-anchor="middle" class="triangle-label">Time</text>
+          </svg>
+          <div class="chip-row" id="tri-chips">
+            <button type="button" class="chip" data-target="distance">Distance</button>
+            <button type="button" class="chip" data-target="speed" aria-pressed="true">Speed</button>
+            <button type="button" class="chip" data-target="time">Time</button>
+          </div>
+          <p class="triangle-caption" id="tri-caption">Cover <strong>Speed</strong> — what's left shows: distance ÷ time</p>
+        </div>
+      </aside>
+    </div>
+
+    <div class="history-note">
+      <h3>A bit of history: why ships measure speed in "knots"</h3>
+      <p>Before speedometers existed, sailors threw a wooden board tied to a rope full of evenly-spaced knots off the back of a moving ship, and counted how many knots ran out in 30 seconds. More knots in the same time meant a faster ship — that's still the origin of "knots" as a unit of speed today.</p>
+    </div>
+
+    <div class="intro-block">
+      <h3>Why it matters</h3>
+      <p>Speed cameras, Usain Bolt's 100 m sprint time, an aeroplane's cruising speed, even a weather forecast's wind speed — anywhere something moves, someone is measuring or calculating its speed.</p>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">O.1.1</span><h3>Finding speed</h3></div>
+          <p>If you know how far something travelled and how long it took, divide distance by time.</p>
+          <p class="example">A car travels 120 km in 2 hours. Speed = 120 ÷ 2 = <strong>60 km/h</strong>.</p>
+          <p>Try it yourself below — drag the sliders and watch the car's actual speed on the track change to match.</p>
+          <div class="figure-card">
+            <div class="track-wrap">
+              <div class="track-labels"><span>0 km</span><span>200 km</span></div>
+              <div class="track"><div class="track-fill"></div><div class="track-dot" id="sc-dot">🚗</div></div>
+            </div>
+            <p class="mini-readout">Speed: <strong id="sc-speed">50.0</strong> km/h</p>
+            <div class="slider-field">
+              <label for="sc-distance">Distance: <strong id="sc-distance-val">100</strong> km</label>
+              <input type="range" class="numline-slider" id="sc-distance" min="20" max="200" step="10" value="100">
+            </div>
+            <div class="slider-field">
+              <label for="sc-time">Time: <strong id="sc-time-val">2</strong> hours</label>
+              <input type="range" class="numline-slider variant-b" id="sc-time" min="1" max="5" step="0.5" value="2">
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">Watch your units</p>
+        <p>Speed can be measured in different units — km/h, mph (miles per hour), or m/s. Scientists usually use m/s. Always check which one a question wants.</p>
+      </aside>
+    </div>
+
+    <div class="split">
+      <div class="split-main">
+        <div class="card concept-card">
+          <div class="concept-title"><span class="ref-tag">O.1.2</span><h3>Finding distance or time</h3></div>
+          <p>The same relationship rearranges both ways: <strong>distance = speed × time</strong>, and <strong>time = distance ÷ speed</strong>.</p>
+          <p class="example">A plane flies at 800 km/h for 3 hours → distance = 800 × 3 = <strong>2400 km</strong>.<br>A train covers 300 km at 100 km/h → time = 300 ÷ 100 = <strong>3 hours</strong>.</p>
+          <div class="figure-card">
+            <div class="chip-row" id="finder-chips">
+              <button type="button" class="chip" data-target="distance" aria-pressed="true">Find distance</button>
+              <button type="button" class="chip" data-target="time">Find time</button>
+            </div>
+            <div class="finder-row">
+              <div class="slider-field finder-slider" id="finder-speed-field">
+                <label for="finder-speed">Speed: <strong id="finder-speed-val">60</strong> km/h</label>
+                <input type="range" class="numline-slider" id="finder-speed" min="20" max="120" step="5" value="60">
+              </div>
+              <div class="slider-field finder-slider" id="finder-distance-field">
+                <label for="finder-distance">Distance: <strong id="finder-distance-val">120</strong> km <span class="finder-target-readout" id="finder-distance-tag"></span></label>
+                <input type="range" class="numline-slider variant-b" id="finder-distance" min="20" max="400" step="10" value="120">
+              </div>
+              <div class="slider-field finder-slider" id="finder-time-field">
+                <label for="finder-time">Time: <strong id="finder-time-val">2</strong> hours <span class="finder-target-readout" id="finder-time-tag"></span></label>
+                <input type="range" class="numline-slider" id="finder-time" min="1" max="6" step="0.5" value="2">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="aside-card">
+        <p class="aside-label">Common mix-up</p>
+        <p>"Average speed" isn't the same as what a speedometer shows at any one instant — a journey with stops and fast bits can still average out to one steady number.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="race-track">
+    <div class="section-head"><span class="index">02</span><h2>Race Track</h2></div>
+    <p class="intro">Set up two journeys and see whose average speed wins. Same idea as above, just two at once — try giving one car a shorter distance but more time, and see if it can still win.</p>
+
+    <div class="card">
+      <div class="race-figure">
+        <div class="race-vehicle">
+          <div class="race-vehicle-head"><h3>🚗 Car A</h3><p class="mini-readout">Speed: <strong id="raceA-speed">60.0</strong> km/h</p></div>
+          <div class="track-wrap">
+            <div class="track-labels"><span>0 km</span><span>200 km</span></div>
+            <div class="track"><div class="track-fill"></div><div class="track-dot" id="raceA-dot">🚗</div></div>
+          </div>
+          <div class="race-sliders">
+            <div class="slider-field">
+              <label for="raceA-distance">Distance: <strong id="raceA-distance-val">120</strong> km</label>
+              <input type="range" class="numline-slider" id="raceA-distance" min="20" max="200" step="10" value="120">
+            </div>
+            <div class="slider-field">
+              <label for="raceA-time">Time: <strong id="raceA-time-val">2</strong> hours</label>
+              <input type="range" class="numline-slider variant-b" id="raceA-time" min="1" max="5" step="0.5" value="2">
+            </div>
+          </div>
+        </div>
+
+        <div class="race-vehicle">
+          <div class="race-vehicle-head"><h3>🚙 Car B</h3><p class="mini-readout">Speed: <strong id="raceB-speed">75.0</strong> km/h</p></div>
+          <div class="track-wrap">
+            <div class="track-labels"><span>0 km</span><span>200 km</span></div>
+            <div class="track"><div class="track-fill"></div><div class="track-dot" id="raceB-dot">🚙</div></div>
+          </div>
+          <div class="race-sliders">
+            <div class="slider-field">
+              <label for="raceB-distance">Distance: <strong id="raceB-distance-val">150</strong> km</label>
+              <input type="range" class="numline-slider" id="raceB-distance" min="20" max="200" step="10" value="150">
+            </div>
+            <div class="slider-field">
+              <label for="raceB-time">Time: <strong id="raceB-time-val">2</strong> hours</label>
+              <input type="range" class="numline-slider variant-b" id="raceB-time" min="1" max="5" step="0.5" value="2">
+            </div>
+          </div>
+        </div>
+
+        <p class="race-verdict" id="race-verdict">Car B is faster — 75.0 km/h vs 60.0 km/h</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="practice">
+    <div class="section-head"><span class="index">03</span><h2>Practice</h2></div>
+    <p class="intro">Four questions, no clock, no score — just unlimited tries and a hint if you want one.</p>
+    <div class="progress-row">
+      <span id="progress-text">0 of 4 explored</span>
+      <div class="progress-dots" id="progress-dots"><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div id="practice-container" style="display: flex; flex-direction: column; gap: 1.1rem;"></div>
+  </section>
+
+  <section id="recap">
+    <div class="section-head"><span class="index">04</span><h2>Recap</h2></div>
+    <ul class="recap-list">
+      <li><span class="tick">✓</span> Speed tells you how far something travels in a given time: speed = distance ÷ time.</li>
+      <li><span class="tick">✓</span> Rearrange the same relationship to find distance (speed × time) or time (distance ÷ speed) instead.</li>
+      <li><span class="tick">✓</span> Always check your units — km/h, m/s and mph aren't interchangeable without converting.</li>
+      <li><span class="tick">✓</span> Average speed can hide a journey that sped up and slowed down along the way.</li>
+    </ul>
+    <footer class="note">Covers National Curriculum ref O.1 (sub-skills O.1.1–O.1.2)</footer>
+  </section>
+</div>
+
+<script src="../../../../../shared/shared.js"></script>
+<script>
+  // ---------- Formula triangle (mechanics figure) ----------
+  const triParts = { distance: document.getElementById('tri-distance'), speed: document.getElementById('tri-speed'), time: document.getElementById('tri-time') };
+  const triLabels = { distance: document.getElementById('tri-distance-label'), speed: document.getElementById('tri-speed-label'), time: document.getElementById('tri-time-label') };
+  const triFormulas = {
+    distance: 'Cover <strong>Distance</strong> — what\'s left shows: speed × time',
+    speed: 'Cover <strong>Speed</strong> — what\'s left shows: distance ÷ time',
+    time: 'Cover <strong>Time</strong> — what\'s left shows: distance ÷ speed'
+  };
+  function updateTriangle(target) {
+    Object.entries(triParts).forEach(([key, el]) => el.classList.toggle('active', key === target));
+    Object.entries(triLabels).forEach(([key, el]) => el.classList.toggle('on-active', key === target));
+    document.getElementById('tri-caption').innerHTML = triFormulas[target];
+    document.querySelectorAll('#tri-chips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.target === target ? 'true' : 'false'));
+  }
+  document.getElementById('tri-chips').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    updateTriangle(btn.dataset.target);
+  });
+  updateTriangle('speed');
+
+  // ---------- Speed calculator (O.1.1) ----------
+  const scState = { distance: 100, time: 2 };
+  const scDot = document.getElementById('sc-dot');
+  function updateSpeedCalc() {
+    const speed = scState.distance / scState.time;
+    document.getElementById('sc-speed').textContent = speed.toFixed(1);
+    document.getElementById('sc-distance-val').textContent = scState.distance;
+    document.getElementById('sc-time-val').textContent = scState.time;
+  }
+  document.getElementById('sc-distance').addEventListener('input', (e) => { scState.distance = Number(e.target.value); updateSpeedCalc(); });
+  document.getElementById('sc-time').addEventListener('input', (e) => { scState.time = Number(e.target.value); updateSpeedCalc(); });
+  updateSpeedCalc();
+
+  // ---------- Distance/time finder (O.1.2) ----------
+  const finderState = { target: 'distance', speed: 60, distance: 120, time: 2 };
+  const finderFields = { speed: document.getElementById('finder-speed-field'), distance: document.getElementById('finder-distance-field'), time: document.getElementById('finder-time-field') };
+  const finderInputs = { speed: document.getElementById('finder-speed'), distance: document.getElementById('finder-distance'), time: document.getElementById('finder-time') };
+  function updateFinder() {
+    if (finderState.target === 'distance') {
+      finderState.distance = finderState.speed * finderState.time;
+    } else {
+      finderState.time = finderState.distance / finderState.speed;
+    }
+    document.getElementById('finder-speed-val').textContent = finderState.speed;
+    document.getElementById('finder-distance-val').textContent = Math.round(finderState.distance * 10) / 10;
+    document.getElementById('finder-time-val').textContent = Math.round(finderState.time * 10) / 10;
+    finderInputs.distance.value = Math.min(400, Math.max(20, finderState.distance));
+    finderInputs.time.value = Math.min(6, Math.max(1, finderState.time));
+    Object.entries(finderFields).forEach(([key, el]) => el.classList.toggle('is-target', key === finderState.target));
+    document.getElementById('finder-distance-tag').textContent = finderState.target === 'distance' ? '(calculated)' : '';
+    document.getElementById('finder-time-tag').textContent = finderState.target === 'time' ? '(calculated)' : '';
+  }
+  finderInputs.speed.addEventListener('input', (e) => { finderState.speed = Number(e.target.value); updateFinder(); });
+  finderInputs.distance.addEventListener('input', (e) => { if (finderState.target !== 'distance') { finderState.distance = Number(e.target.value); updateFinder(); } });
+  finderInputs.time.addEventListener('input', (e) => { if (finderState.target !== 'time') { finderState.time = Number(e.target.value); updateFinder(); } });
+  document.getElementById('finder-chips').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    finderState.target = btn.dataset.target;
+    document.querySelectorAll('#finder-chips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.target === finderState.target ? 'true' : 'false'));
+    updateFinder();
+  });
+  updateFinder();
+
+  // ---------- Shared: animated track dot loop ----------
+  function startTrackLoop(dotEl, getState) {
+    let start = null;
+    function frame(ts) {
+      if (start === null) start = ts;
+      const { distance, time } = getState();
+      const durationMs = Math.max(300, time * 900);
+      const elapsed = (ts - start) % durationMs;
+      const progress = elapsed / durationMs;
+      const widthPct = Math.min(100, (distance / 200) * 100);
+      dotEl.style.left = (progress * widthPct) + '%';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  startTrackLoop(scDot, () => scState);
+
+  // ---------- Race Track (Section 02) ----------
+  const raceA = { distance: 120, time: 2 };
+  const raceB = { distance: 150, time: 2 };
+  const raceADot = document.getElementById('raceA-dot');
+  const raceBDot = document.getElementById('raceB-dot');
+  function updateRace() {
+    const speedA = raceA.distance / raceA.time;
+    const speedB = raceB.distance / raceB.time;
+    document.getElementById('raceA-speed').textContent = speedA.toFixed(1);
+    document.getElementById('raceB-speed').textContent = speedB.toFixed(1);
+    document.getElementById('raceA-distance-val').textContent = raceA.distance;
+    document.getElementById('raceA-time-val').textContent = raceA.time;
+    document.getElementById('raceB-distance-val').textContent = raceB.distance;
+    document.getElementById('raceB-time-val').textContent = raceB.time;
+    const verdict = document.getElementById('race-verdict');
+    if (Math.abs(speedA - speedB) < 0.05) {
+      verdict.textContent = `It's a tie — both at ${speedA.toFixed(1)} km/h`;
+    } else if (speedA > speedB) {
+      verdict.textContent = `Car A is faster — ${speedA.toFixed(1)} km/h vs ${speedB.toFixed(1)} km/h`;
+    } else {
+      verdict.textContent = `Car B is faster — ${speedB.toFixed(1)} km/h vs ${speedA.toFixed(1)} km/h`;
+    }
+  }
+  document.getElementById('raceA-distance').addEventListener('input', (e) => { raceA.distance = Number(e.target.value); updateRace(); });
+  document.getElementById('raceA-time').addEventListener('input', (e) => { raceA.time = Number(e.target.value); updateRace(); });
+  document.getElementById('raceB-distance').addEventListener('input', (e) => { raceB.distance = Number(e.target.value); updateRace(); });
+  document.getElementById('raceB-time').addEventListener('input', (e) => { raceB.time = Number(e.target.value); updateRace(); });
+  updateRace();
+  startTrackLoop(raceADot, () => raceA);
+  startTrackLoop(raceBDot, () => raceB);
+
+  // ---------- Practice questions ----------
+  const questions = [
+    {
+      id: 'q1', prompt: 'A cyclist rides 30 km in 2 hours. What is their average speed?',
+      options: ['60 km/h', '15 km/h', '32 km/h', '28 km/h'], answerIndex: 1,
+      hint: 'Speed = distance ÷ time.', explain: '30 km ÷ 2 h = 15 km/h.'
+    },
+    {
+      id: 'q2', prompt: 'A car travels at 50 km/h for 3 hours. How far does it travel?',
+      options: ['100 km', '150 km', '53 km', '47 km'], answerIndex: 1,
+      hint: 'Distance = speed × time.', explain: '50 km/h × 3 h = 150 km.'
+    },
+    {
+      id: 'q3', prompt: 'A runner covers 400 m in 50 seconds. What is their speed?',
+      options: ['20 m/s', '0.125 m/s', '8 m/s', '450 m/s'], answerIndex: 2,
+      hint: 'Speed = distance ÷ time — this one is in metres and seconds.', explain: '400 m ÷ 50 s = 8 m/s.'
+    },
+    {
+      id: 'q4', prompt: 'A plane needs to fly 1200 km at a speed of 400 km/h. How long will the flight take?',
+      options: ['4 hours', '800 hours', '3 hours', '300 hours'], answerIndex: 2,
+      hint: 'Time = distance ÷ speed.', explain: '1200 km ÷ 400 km/h = 3 hours.'
+    }
+  ];
+  const solved = new Set();
+  const practiceContainer = document.getElementById('practice-container');
+  questions.forEach(q => renderQuestion(q, practiceContainer, solved, questions));
+
+  // ---------- Profile bar ----------
+  renderProfileBar('speed');
+</script>
